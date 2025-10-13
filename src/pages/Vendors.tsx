@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import VendorApplications from './VendorApplications';
+import VendorApplications from './admin/Vendors/Application/VendorApplications';
 import ExistingVendors from './ExistingVendors';
 
 type TabType = 'applications' | 'existing';

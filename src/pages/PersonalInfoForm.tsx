@@ -15,7 +15,9 @@ export default function PersonalInfoForm() {
         birthDate: '',
         maritalStatus: '',
         spouse: '',
-        actualOccupant: '',
+        actualOccupantFirstName: '',
+        actualOccupantLastName: '',
+        actualOccupantPhone: '',
         businessName: '',
         email: '',
         phoneNumber: ''
@@ -89,7 +91,10 @@ export default function PersonalInfoForm() {
                     marital_status: data.maritalStatus || null,
                     spouse_name: data.spouse || null,
                     complete_address: data.completeAddress,
-                    actual_occupant: data.actualOccupant || null,
+                    actual_occupant: null,
+                    actual_occupant_first_name: data.actualOccupantFirstName || null,
+                    actual_occupant_last_name: data.actualOccupantLastName || null,
+                    actual_occupant_phone: data.actualOccupantPhone ? `+63${data.actualOccupantPhone}` : null,
                     business_name: data.businessName || null,
                     email: data.email || null,
                     phone_number: data.phoneNumber ? `+63${data.phoneNumber}` : null,
@@ -118,7 +123,10 @@ export default function PersonalInfoForm() {
                     marital_status: data.maritalStatus || null,
                     spouse_name: data.spouse || null,
                     complete_address: data.completeAddress,
-                    actual_occupant: data.actualOccupant || null,
+                    actual_occupant: null,
+                    actual_occupant_first_name: data.actualOccupantFirstName || null,
+                    actual_occupant_last_name: data.actualOccupantLastName || null,
+                    actual_occupant_phone: data.actualOccupantPhone ? `+63${data.actualOccupantPhone}` : null,
                     business_name: data.businessName || null,
                     email: data.email || null,
                     phone_number: data.phoneNumber ? `+63${data.phoneNumber}` : null,
@@ -149,7 +157,16 @@ export default function PersonalInfoForm() {
         let formattedValue = value
 
         // Format name fields and address to uppercase all letters
-        if (name === 'firstName' || name === 'lastName' || name === 'middleInitial' || name === 'spouse' || name === 'actualOccupant' || name === 'completeAddress') {
+        if (
+            name === 'firstName' ||
+            name === 'lastName' ||
+            name === 'middleInitial' ||
+            name === 'spouse' ||
+            name === 'actualOccupant' ||
+            name === 'actualOccupantFirstName' ||
+            name === 'actualOccupantLastName' ||
+            name === 'completeAddress'
+        ) {
             formattedValue = value.toUpperCase()
         }
 
@@ -587,18 +604,48 @@ export default function PersonalInfoForm() {
                         </div>
 
                         <div>
-                            <label htmlFor="actualOccupant" className="block text-sm font-medium text-gray-700 mb-2">
-                                Actual Occupant
-                            </label>
-                            <input
-                                type="text"
-                                id="actualOccupant"
-                                name="actualOccupant"
-                                value={formData.actualOccupant}
-                                onChange={handleInputChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                placeholder="Enter the actual occupant of the stall (optional - can be yourself or someone you know)"
-                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Actual Occupant (if not yourself)</label>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <input
+                                        type="text"
+                                        id="actualOccupantFirstName"
+                                        name="actualOccupantFirstName"
+                                        value={formData.actualOccupantFirstName}
+                                        onChange={handleInputChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        placeholder="First Name"
+                                    />
+                                </div>
+                                <div>
+                                    <input
+                                        type="text"
+                                        id="actualOccupantLastName"
+                                        name="actualOccupantLastName"
+                                        value={formData.actualOccupantLastName}
+                                        onChange={handleInputChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        placeholder="Last Name"
+                                    />
+                                </div>
+                                <div>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span className="text-gray-500 text-sm">+63</span>
+                                        </div>
+                                        <input
+                                            type="tel"
+                                            id="actualOccupantPhone"
+                                            name="actualOccupantPhone"
+                                            value={formData.actualOccupantPhone}
+                                            onChange={handleInputChange}
+                                            className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                            placeholder="9XXXXXXXXX"
+                                            maxLength={10}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                             <p className="mt-1 text-sm text-gray-500">Leave blank if you will be the actual occupant</p>
                         </div>
 

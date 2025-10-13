@@ -1,3 +1,29 @@
+interface VendorApplication {
+    id: string;
+    application_number: string;
+    first_name: string;
+    last_name: string;
+    middle_name?: string;
+    age?: number;
+    marital_status?: string;
+    spouse_name?: string;
+    complete_address: string;
+    status?: string;
+    submitted_at?: string;
+    updated_at?: string;
+    person_photo?: string;
+    barangay_clearance?: string;
+    id_front_photo?: string;
+    id_back_photo?: string;
+    birth_certificate?: string;
+    marriage_certificate?: string;
+    notarized_document?: string;
+    assigned_stall_id?: string;
+    assigned_stall_number?: string;
+    assigned_section_name?: string;
+    stall_assigned_at?: string;
+    [key: string]: any;
+}
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { uploadPhoto } from '../utils/photoUpload'
@@ -75,7 +101,7 @@ const VerificationModal: React.FC<VerificationModalProps> = ({ isOpen, onClose, 
 
 export default function ApplicationForm() {
     const navigate = useNavigate()
-    const [applicationData, setApplicationData] = useState<any>(null)
+    const [applicationData, setApplicationData] = useState<VendorApplication | null>(null)
     const [selectedStall, setSelectedStall] = useState<any>(null)
     const [notarizedDocument, setNotarizedDocument] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
@@ -452,57 +478,24 @@ export default function ApplicationForm() {
                 throw updateError
             }
 
-            // Create stall_application record
+
+            // Save stall assignment info directly to vendor_applications
             if (selectedStall && selectedStall.id) {
-                console.log('Creating stall application for stall:', selectedStall.id)
-                console.log('Using vendor application ID:', vendorApplicationId)
-
-                // First, check if the stall exists
-                const { data: stallData, error: stallCheckError } = await supabase
-                    .from('stalls')
-                    .select('id, stall_number, status')
-                    .eq('id', selectedStall.id)
-                    .single()
-
-                if (stallCheckError) {
-                    console.error('Error checking stall:', stallCheckError)
-                    throw new Error(`Stall not found: ${stallCheckError.message}`)
-                }
-
-                console.log('Stall data:', stallData)
-
-                // Check if there's already a stall application for this vendor
-                const { data: existingStallApp, error: existingCheckError } = await supabase
-                    .from('stall_applications')
-                    .select('id, vendor_application_id, stall_id')
-                    .eq('vendor_application_id', vendorApplicationId)
-
-                if (existingCheckError) {
-                    console.error('Error checking existing stall application:', existingCheckError)
-                } else if (existingStallApp && existingStallApp.length > 0) {
-                    console.log('Existing stall application found:', existingStallApp)
-                    console.log('Skipping creation of duplicate stall application')
-                } else {
-                    // Create new stall application
-                    const { data: newStallApp, error: stallAppError } = await supabase
-                        .from('stall_applications')
-                        .insert({
-                            vendor_application_id: vendorApplicationId,
-                            stall_id: selectedStall.id,
-                            applied_at: new Date().toISOString()
-                        })
-                        .select()
-
-                    if (stallAppError) {
-                        console.error('Error creating stall application:', stallAppError)
-                        console.error('StallAppError details:', JSON.stringify(stallAppError, null, 2))
-                        throw new Error(`Failed to create stall application: ${stallAppError.message}`)
-                    }
-
-                    console.log('Successfully created stall application:', newStallApp)
+                const { error: stallAssignError } = await supabase
+                    .from('vendor_applications')
+                    .update({
+                        assigned_stall_id: selectedStall.id,
+                        assigned_stall_number: selectedStall.stall_number,
+                        assigned_section_name: selectedStall.section_name,
+                        stall_assigned_at: new Date().toISOString()
+                    })
+                    .eq('id', vendorApplicationId);
+                if (stallAssignError) {
+                    console.error('Error assigning stall:', stallAssignError);
+                    throw new Error(`Failed to assign stall: ${stallAssignError.message}`);
                 }
             } else {
-                throw new Error('No selected stall found')
+                throw new Error('No selected stall found');
             }
 
             // Navigate to completion page

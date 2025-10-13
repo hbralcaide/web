@@ -1,41 +1,41 @@
-import { BrowserRouter } from 'react-router-dom'
-import { Routes, Route } from 'react-router-dom'
-import AdminLayout from './layouts/AdminLayout'
-import Dashboard from './pages/Dashboard'
-import Vendors from './pages/Vendors'
-import Stalls from './pages/Stalls'
-import Profile from './pages/Profile'
-import Login from './pages/Login'
-import Signup from './pages/SignUp'
-import VendorConfirmed from './pages/VendorConfirmed'
-import MarketSections from './pages/MarketSections'
-import MarketLayout from './pages/MarketLayout'
-import Products from './pages/Products'
-import ProtectedRoute from './components/ProtectedRoute'
-import { AuthProvider } from './context/AuthContext'
-import IndoorMap from './pages/IndoorMap'
-import SectionStalls from './pages/SectionStalls'
-import PublicHome from './pages/PublicHome'
-import PublicHomeDebug from './pages/PublicHomeDebug'
-import VendorApplication from './pages/VendorApplication'
-import PersonalInfoForm from './pages/PersonalInfoForm'
-import PhotoPerson from './pages/PhotoPerson'
-import PhotoBarangay from './pages/PhotoBarangay'
-import PhotoId from './pages/PhotoId'
-import PhotoBirthCert from './pages/PhotoBirthCert'
-import PhotoMarriageCert from './pages/PhotoMarriageCert'
-import ApplicationForm from './pages/ApplicationForm'
-import ApplicationCompletion from './pages/ApplicationCompletion'
-import ApplicationPending from './pages/ApplicationPending'
-import ApplicationApproved from './pages/ApplicationApproved'
-import ApplicationRejected from './pages/ApplicationRejected'
-import ResumeApplication from './pages/ResumeApplication'
-import VendorCredentialSetup from './pages/VendorCredentialSetup'
-import VendorCredentialSuccess from './pages/VendorCredentialSuccess'
-import VendorStatus from './pages/VendorStatus'
-import RaffleWinnerDocuments from './pages/RaffleWinnerDocuments'
-import Raffle from './pages/Raffle'
-import './index.css'
+import { BrowserRouter } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import AdminLayout from './layouts/AdminLayout';
+import Dashboard from './pages/Dashboard';
+import Vendors from './pages/Vendors';
+import Stalls from './pages/Stalls';
+import Profile from './pages/Profile';
+import Login from './pages/Login';
+import Signup from './pages/SignUp';
+import VendorConfirmed from './pages/VendorConfirmed';
+import MarketSections from './pages/MarketSections';
+import MarketLayout from './pages/MarketLayout';
+import Products from './pages/Products';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
+import IndoorMap from './pages/IndoorMap';
+import SectionStalls from './pages/SectionStalls';
+import PublicHome from './pages/PublicHome';
+import PublicHomeDebug from './pages/PublicHomeDebug';
+import VendorApplication from './pages/VendorApplication';
+import PersonalInfoForm from './pages/PersonalInfoForm';
+import PhotoPerson from './pages/PhotoPerson';
+import PhotoBarangay from './pages/PhotoBarangay';
+import PhotoId from './pages/PhotoId';
+import PhotoBirthCert from './pages/PhotoBirthCert';
+import PhotoMarriageCert from './pages/PhotoMarriageCert';
+import ApplicationForm from './pages/ApplicationForm';
+import ApplicationCompletion from './pages/ApplicationCompletion';
+import ApplicationPending from './pages/ApplicationPending';
+import ApplicationApproved from './pages/ApplicationApproved';
+import ApplicationRejected from './pages/ApplicationRejected';
+import ResumeApplication from './pages/ResumeApplication';
+import VendorCredentialSetup from './pages/VendorCredentialSetup';
+import VendorCredentialSuccess from './pages/VendorCredentialSuccess';
+import VendorStatus from './pages/VendorStatus';
+import RaffleWinnerDocuments from './pages/RaffleWinnerDocuments';
+import Raffle from './pages/Raffle';
+import './index.css';
 
 function App() {
   return (
@@ -96,7 +96,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -40,26 +40,41 @@ const VendorDetails: React.FC<Props> = ({ isOpen, onClose, application, onUpdate
 
   if (!isOpen || !localApp) return null;
 
-  const handleSingleApprove = async (approveKey: string) => {
+  const handleSingleApprove = async (approveKey: keyof VendorApplicationUpdate) => {
     setUpdating(true);
     try {
-      const updateObj: Partial<VendorApplicationUpdate> = {
-        [approveKey]: true as any,
-        updated_at: new Date().toISOString(),
-      };
+      const updateQuery = `
+        UPDATE vendor_applications
+        SET ${approveKey} = true, updated_at = NOW()
+        WHERE id = '${localApp.id}'
+        RETURNING *;
+      `;
 
-      const { data, error } = await supabase
-        .from('vendor_applications')
-        .update(updateObj)
-        .eq('id', localApp.id)
-        .select()
-        .single<SupabaseQueryResult>();
+      const { data, error } = await supabase.rpc('execute_raw_sql', { query: updateQuery });
 
       if (error) throw error;
-      const normalized = mapToVendorApplication(data);
+
+      const normalized = mapToVendorApplication(data[0]);
       setLocalApp(normalized);
+
       if (refetchApplications) await refetchApplications();
-      await maybeAdvanceToRaffle(localApp.id, normalized);
+
+      // Check if the application can advance to raffle
+      const allApproved = [
+        'person_photo_approved',
+        'barangay_clearance_approved',
+        'id_front_photo_approved',
+        'id_back_photo_approved',
+        'birth_certificate_approved',
+        ...(normalized.marital_status?.toLowerCase() === 'married'
+          ? ['marriage_certificate_approved']
+          : []),
+        'notarized_document_approved',
+      ].every((key) => normalized[key]);
+
+      if (allApproved) {
+        await maybeAdvanceToRaffle(localApp.id, normalized);
+      }
     } catch (err) {
       console.error('Single approve error:', err);
       alert('Failed to approve document.');
@@ -68,29 +83,43 @@ const VendorDetails: React.FC<Props> = ({ isOpen, onClose, application, onUpdate
     }
   };
 
-  const handleBulkApprove = async (approveKeys: string[]) => {
+  const handleBulkApprove = async (approveKeys: (keyof VendorApplicationUpdate)[]) => {
     if (!approveKeys.length) return;
     setUpdating(true);
     try {
-      const updateObj: Partial<VendorApplicationUpdate> = {};
-      approveKeys.forEach((key) => {
-        updateObj[key as keyof VendorApplicationUpdate] = true as any;
-      });
-      updateObj.updated_at = new Date().toISOString();
+      const updateQuery = `
+        UPDATE vendor_applications
+        SET ${approveKeys.map((key) => `${key} = true`).join(', ')}, updated_at = NOW()
+        WHERE id = '${localApp.id}'
+        RETURNING *;
+      `;
 
-      const { data, error } = await supabase
-        .from('vendor_applications')
-        .update(updateObj)
-        .eq('id', localApp.id)
-        .select()
-        .single<SupabaseQueryResult>();
+      const { data, error } = await supabase.rpc('execute_raw_sql', { query: updateQuery });
 
       if (error) throw error;
-      const normalized = mapToVendorApplication(data);
+
+      const normalized = mapToVendorApplication(data[0]);
       setLocalApp(normalized);
       setSelectedDocs([]);
+
       if (refetchApplications) await refetchApplications();
-      await maybeAdvanceToRaffle(localApp.id, normalized);
+
+      // Check if the application can advance to raffle
+      const allApproved = [
+        'person_photo_approved',
+        'barangay_clearance_approved',
+        'id_front_photo_approved',
+        'id_back_photo_approved',
+        'birth_certificate_approved',
+        ...(normalized.marital_status?.toLowerCase() === 'married'
+          ? ['marriage_certificate_approved']
+          : []),
+        'notarized_document_approved',
+      ].every((key) => normalized[key]);
+
+      if (allApproved) {
+        await maybeAdvanceToRaffle(localApp.id, normalized);
+      }
     } catch (err) {
       console.error('Bulk approve error:', err);
       alert('Bulk approve failed.');

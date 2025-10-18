@@ -263,7 +263,8 @@ export interface Database {
           marital_status: string | null
           spouse_name: string | null
           complete_address: string
-          actual_occupant: string | null
+          actual_occupant_first_name: string | null
+          actual_occupant_last_name: string | null
           status: string
           submitted_at: string | null
           approved_at: string | null
@@ -289,7 +290,8 @@ export interface Database {
           marital_status?: string | null
           spouse_name?: string | null
           complete_address: string
-          actual_occupant?: string | null
+          actual_occupant_first_name?: string | null
+          actual_occupant_last_name?: string | null
           status?: string
           submitted_at?: string | null
           approved_at?: string | null
@@ -315,7 +317,8 @@ export interface Database {
           marital_status?: string | null
           spouse_name?: string | null
           complete_address?: string
-          actual_occupant?: string | null
+          actual_occupant_first_name?: string | null
+          actual_occupant_last_name?: string | null
           status?: string
           submitted_at?: string | null
           approved_at?: string | null

@@ -13,11 +13,13 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.56.1",
     "@types/react-router-dom": "^5.3.3",
+    "crypto-js": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.1"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@types/react-reconciler": "^0.32.0",

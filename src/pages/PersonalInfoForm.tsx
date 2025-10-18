@@ -91,7 +91,6 @@ export default function PersonalInfoForm() {
                     marital_status: data.maritalStatus || null,
                     spouse_name: data.spouse || null,
                     complete_address: data.completeAddress,
-                    actual_occupant: null,
                     actual_occupant_first_name: data.actualOccupantFirstName || null,
                     actual_occupant_last_name: data.actualOccupantLastName || null,
                     actual_occupant_phone: data.actualOccupantPhone ? `+63${data.actualOccupantPhone}` : null,
@@ -123,7 +122,6 @@ export default function PersonalInfoForm() {
                     marital_status: data.maritalStatus || null,
                     spouse_name: data.spouse || null,
                     complete_address: data.completeAddress,
-                    actual_occupant: null,
                     actual_occupant_first_name: data.actualOccupantFirstName || null,
                     actual_occupant_last_name: data.actualOccupantLastName || null,
                     actual_occupant_phone: data.actualOccupantPhone ? `+63${data.actualOccupantPhone}` : null,
@@ -171,22 +169,19 @@ export default function PersonalInfoForm() {
         }
 
         // Format phone number - only allow numbers, max 10 digits, must start with 9
-        if (name === 'phoneNumber') {
+        if (name === 'phoneNumber' || name === 'actualOccupantPhone') {
             // Remove all non-numeric characters
             const numericValue = value.replace(/\D/g, '')
 
             // Only allow 10 digits
             if (numericValue.length <= 10) {
-                // Must start with 9
-                if (numericValue.length === 0 || numericValue.startsWith('9')) {
-                    formattedValue = numericValue
-                } else {
-                    // If user tries to enter a number that doesn't start with 9, ignore it
-                    return
-                }
+                formattedValue = numericValue
             } else {
-                // If more than 10 digits, keep only the first 10
-                formattedValue = numericValue.substring(0, 10)
+                formattedValue = numericValue.slice(0, 10) // Limit to 10 digits
+            }
+
+            if (formattedValue && !formattedValue.startsWith('9')) {
+                formattedValue = '' // Clear if it doesn't start with 9
             }
         }
 

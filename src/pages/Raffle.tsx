@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { Database } from '../types/supabase';
 
 interface VendorProfile {
     id: string
@@ -8,7 +9,7 @@ interface VendorProfile {
     last_name: string
     business_name: string
     application_number: string
-    stall_number: string
+    assigned_stall_number: string
     category: string
     sectionName: string
     sectionCode: string
@@ -16,7 +17,7 @@ interface VendorProfile {
 
 interface StallWithApplicants {
     id: string
-    stall_number: string
+    stall_number: string // Added this property to fix the error
     market_sections: {
         name: string
         code: string
@@ -26,7 +27,29 @@ interface StallWithApplicants {
         first_name: string
         last_name: string
         business_name: string
+        phone_number?: string
     }[]
+}
+
+// Define the type for the applicant data
+interface ApplicantData {
+  id: string;
+  assigned_stall_number: string;
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
+  age?: number;
+  marital_status?: string;
+  spouse_name?: string;
+  complete_address?: string;
+  gender?: string;
+  birth_date?: string;
+  business_name: string;
+  email: string;
+  phone_number: string;
+  actual_occupant_first_name?: string;
+  actual_occupant_last_name?: string;
+  actual_occupant_phone?: string;
 }
 
 export default function Raffle() {
@@ -36,7 +59,7 @@ export default function Raffle() {
     const [loading, setLoading] = useState(true)
     const [availableStalls, setAvailableStalls] = useState<StallWithApplicants[]>([])
     const [selectedStall, setSelectedStall] = useState<StallWithApplicants | null>(null)
-    const [selectedApplicant, setSelectedApplicant] = useState<{ id: string, first_name: string, last_name: string, business_name: string } | null>(null)
+    const [selectedApplicant, setSelectedApplicant] = useState<{ id: string, first_name: string, last_name: string, business_name: string, assigned_stall_number: string } | null>(null)
     const [raffling, setRaffling] = useState(false)
     const [spinning, setSpinning] = useState(false)
     const [activeIndex, setActiveIndex] = useState(0)
@@ -52,13 +75,7 @@ export default function Raffle() {
             const { data: vendorApp, error: vendorError } = await (supabase as any)
                 .from('vendor_applications')
                 .select(`
-          *,
-          stall_applications (
-            *,
-            stalls (
-              *
-            )
-          )
+          *
         `)
                 .eq('id', vendorId)
                 .single()
@@ -76,23 +93,23 @@ export default function Raffle() {
                 last_name: vendorApp.last_name || '',
                 business_name: vendorApp.business_name || '',
                 application_number: vendorApp.application_number,
-                stall_number: vendorApp.stall_applications?.[0]?.stalls?.stall_number || '',
+                assigned_stall_number: vendorApp.assigned_stall_id || '',
                 category: '',
-                sectionName: '',
+                sectionName: vendorApp.assigned_section_name || '',
                 sectionCode: ''
             }
 
-            if (transformedVendor.stall_number) {
-                if (transformedVendor.stall_number.startsWith('F-')) {
+            if (transformedVendor.assigned_stall_number) {
+                if (transformedVendor.assigned_stall_number.startsWith('F-')) {
                     transformedVendor.sectionName = 'Fish'
                     transformedVendor.sectionCode = 'F'
-                } else if (transformedVendor.stall_number.startsWith('FV-')) {
+                } else if (transformedVendor.assigned_stall_number.startsWith('FV-')) {
                     transformedVendor.sectionName = 'Fruits & Vegetables'
                     transformedVendor.sectionCode = 'FV'
-                } else if (transformedVendor.stall_number.startsWith('M-')) {
+                } else if (transformedVendor.assigned_stall_number.startsWith('M-')) {
                     transformedVendor.sectionName = 'Meat'
                     transformedVendor.sectionCode = 'M'
-                } else if (transformedVendor.stall_number.startsWith('G-')) {
+                } else if (transformedVendor.assigned_stall_number.startsWith('G-')) {
                     transformedVendor.sectionName = 'General Merchandise'
                     transformedVendor.sectionCode = 'G'
                 }
@@ -110,93 +127,101 @@ export default function Raffle() {
 
     const fetchAvailableStalls = async () => {
         try {
-            setLoading(true)
+            setLoading(true);
 
-            const { data: stallApplications, error: applicationsError } = await (supabase as any)
-                .from('stall_applications')
+            const { data: vendorApplications, error: applicationsError } = await (supabase as any)
+                .from('vendor_applications')
                 .select(`
-                    *,
-                    vendor_applications (
-                        id,
-                        first_name,
-                        last_name,
-                        business_name,
-                        status
-                    ),
-                    stalls (
-                        id,
-                        stall_number,
-                        status,
-                        section_id
-                    )
-                `)
+                    id,
+                    first_name,
+                    last_name,
+                    business_name,
+                    phone_number,
+                    status,
+                    assigned_stall_id,
+                    assigned_stall_number,
+                    assigned_section_name
+                `);
 
             if (applicationsError) {
-                console.error('Error fetching stall applications:', applicationsError)
-                return
+                console.error('Error fetching vendor applications:', applicationsError);
+                return;
             }
 
+            const { data: stalls, error: stallsError } = await (supabase as any)
+                .from('stalls')
+                .select('id, stall_number');
+
+            if (stallsError) {
+                console.error('Error fetching stalls:', stallsError);
+                return;
+            }
+
+            const stallsMap = new Map();
+            if (stalls) {
+                stalls.forEach((stall: any) => {
+                    stallsMap.set(stall.id, stall);
+                });
+            }
+
+            const sectionsMap = new Map();
             const { data: marketSections, error: sectionsError } = await (supabase as any)
                 .from('market_sections')
-                .select('id, name, code')
+                .select('id, name, code');
 
             if (sectionsError) {
-                console.error('Error fetching market sections:', sectionsError)
-                return
+                console.error('Error fetching market sections:', sectionsError);
+                return;
             }
 
-            const sectionsMap = new Map()
             if (marketSections) {
                 marketSections.forEach((section: any) => {
-                    sectionsMap.set(section.id, section)
-                })
+                    sectionsMap.set(section.id, section);
+                });
             }
 
-            const stallsMap = new Map()
+            const stallsWithApplicantsMap = new Map();
 
-            if (stallApplications) {
-                stallApplications.forEach((app: any) => {
-                    const stall = app.stalls
-                    const vendor = app.vendor_applications
+            if (vendorApplications) {
+                vendorApplications.forEach((vendor: any) => {
+                    const stall = stallsMap.get(vendor.assigned_stall_id);
+                    const stallNumber = stall?.stall_number || 'Unknown Stall';
+                    const sectionName = vendor.assigned_section_name || 'Unknown Section';
 
-                    if (!stall || !vendor) return
+                    if (vendor.status !== 'approved_for_raffle') return;
+                    if (vendor.status === 'won_raffle') return;
 
-                    const stallId = stall.id
-
-                    if (vendor.status !== 'approved_for_raffle') return
-                    if (vendor.status === 'won_raffle') return
-
-                    if (!stallsMap.has(stallId)) {
-                        const marketSection = sectionsMap.get(stall.section_id)
-                        stallsMap.set(stallId, {
-                            id: stall.id,
-                            stall_number: stall.stall_number,
-                            market_sections: marketSection || { name: 'Unknown Section', code: 'UNK' },
+                    if (!stallsWithApplicantsMap.has(stall?.id)) {
+                        stallsWithApplicantsMap.set(stall?.id, {
+                            id: stall?.id, // Use the UUID as the id
+                            stall_number: stallNumber,
+                            market_sections: { name: sectionName, code: 'UNK' },
                             applicants: []
-                        })
+                        });
                     }
 
-                    const stallData = stallsMap.get(stallId)
+                    const stallData = stallsWithApplicantsMap.get(stall?.id);
                     if (stallData) {
                         stallData.applicants.push({
                             id: vendor.id,
                             first_name: vendor.first_name,
                             last_name: vendor.last_name,
-                            business_name: vendor.business_name
-                        })
+                            business_name: vendor.business_name,
+                            phone_number: vendor.phone_number
+                        });
                     }
-                })
+                });
             }
 
-            const stallsWithApplicants = Array.from(stallsMap.values()).sort((a, b) =>
+            const stallsWithApplicants = Array.from(stallsWithApplicantsMap.values()).sort((a, b) =>
                 a.stall_number.localeCompare(b.stall_number)
-            )
+            );
 
-            setAvailableStalls(stallsWithApplicants)
+            setAvailableStalls(stallsWithApplicants);
         } catch (error) {
-            console.error('Error in fetchAvailableStalls:', error)
+            console.error('Error in fetchAvailableStalls:', error);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
 
@@ -225,7 +250,10 @@ export default function Raffle() {
                 if (selectedStall) {
                     const finalIndex = Math.floor(Math.random() * selectedStall.applicants.length)
                     setActiveIndex(finalIndex + 1) // +1 to account for START being at index 0
-                    setSelectedApplicant(selectedStall.applicants[finalIndex])
+                    setSelectedApplicant({
+                      ...selectedStall.applicants[finalIndex],
+                      assigned_stall_number: selectedStall.stall_number
+                    })
                 }
 
                 // Show winner highlighted for 1 second then show modal for 2 seconds
@@ -268,7 +296,10 @@ export default function Raffle() {
             if (activeIndex === 0 && selectedStall.applicants[0]?.first_name === 'START') {
                 startAutoSpin()
             } else {
-                setSelectedApplicant(selectedStall.applicants[activeIndex])
+                setSelectedApplicant({
+                  ...selectedStall.applicants[activeIndex],
+                  assigned_stall_number: selectedStall.stall_number
+                })
                 setShowWinnerModal(true)
 
                 // Auto-close modal after 2 seconds
@@ -279,122 +310,180 @@ export default function Raffle() {
         }
     }
 
-    const handleRaffle = async () => {
-        if (!selectedStall || !selectedApplicant) return
+const generateUsername = (firstName: string, lastName: string): string => {
+  const firstNameParts = firstName.trim().split(/\s+/);
+  const firstNameInitials = firstNameParts.map(part => part.charAt(0)).join('');
+  return (firstNameInitials + lastName).toLowerCase().replace(/[^a-z0-9]/g, '');
+};
 
-        try {
-            setRaffling(true)
+const hashPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+};
 
-            const certificateData = {
-                vendor_id: selectedApplicant.id,
-                vendor_name: `${selectedApplicant.first_name} ${selectedApplicant.last_name}`,
-                business_name: selectedApplicant.business_name,
-                stall_number: selectedStall.stall_number,
-                section_name: selectedStall.market_sections?.name || 'Unknown Section',
-                assigned_date: new Date().toISOString(),
-                certificate_number: `CERT-${Date.now()}-${selectedStall.stall_number.replace('-', '')}`,
-                raffle_conducted_by: 'Admin',
-                status: 'active'
-            }
+const generateUniqueActualOccupantUsername = async (
+  firstName: string,
+  lastName: string,
+  mainVendorUsername: string
+): Promise<string> => {
+  const baseUsername = generateUsername(firstName, lastName);
 
-            const { error: updateError } = await (supabase as any)
-                .from('vendor_applications')
-                .update({
-                    status: 'won_raffle',
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', selectedApplicant.id)
-
-            if (updateError) {
-                console.error('Failed to update application status:', updateError)
-                alert('Failed to update application status.')
-                return
-            }
-
-            const { data: raffleEvent, error: raffleEventError } = await (supabase as any)
-                .from('raffle_events')
-                .insert({
-                    stall_id: selectedStall.id,
-                    event_name: `Raffle for ${selectedStall.stall_number}`,
-                    description: `Raffle conducted for stall ${selectedStall.stall_number}`,
-                    status: 'completed',
-                    conducted_at: new Date().toISOString(),
-                    conducted_by: null
-                })
-                .select()
-                .single()
-
-            if (raffleEventError) {
-                console.error('Failed to create raffle event:', raffleEventError)
-                alert('Failed to create raffle event.')
-                return
-            }
-
-            const { error: participantError } = await (supabase as any)
-                .from('raffle_participants')
-                .insert({
-                    raffle_event_id: raffleEvent.id,
-                    vendor_application_id: selectedApplicant.id,
-                    is_winner: true,
-                    selected_at: new Date().toISOString()
-                })
-
-            if (participantError) {
-                console.error('Failed to create raffle participant:', participantError)
-                alert('Failed to create raffle participant.')
-                return
-            }
-
-            const { error: stallUpdateError } = await (supabase as any)
-                .from('stalls')
-                .update({
-                    status: 'occupied',
-                    vendor_profile_id: null,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', selectedStall.id)
-
-            if (stallUpdateError) {
-                console.error('Failed to update stall status:', stallUpdateError)
-                alert('Failed to update stall status.')
-                return
-            }
-
-            const { error: certificateError } = await (supabase as any)
-                .from('assignment_certificates')
-                .insert([certificateData])
-
-            if (certificateError) {
-                console.error('Failed to create certificate:', certificateError)
-            }
-
-            const otherApplicantIds = selectedStall.applicants
-                .filter(applicant => applicant.id !== selectedApplicant.id)
-                .map(applicant => applicant.id)
-
-            if (otherApplicantIds.length > 0) {
-                const { error: otherApplicantsError } = await (supabase as any)
-                    .from('vendor_applications')
-                    .update({
-                        status: 'not_selected',
-                        updated_at: new Date().toISOString()
-                    })
-                    .in('id', otherApplicantIds)
-
-                if (otherApplicantsError) {
-                    console.error('Failed to update other applicants:', otherApplicantsError)
-                }
-            }
-
-            alert(`Stall assigned successfully! ${selectedApplicant.first_name} ${selectedApplicant.last_name} has been assigned to ${selectedStall.stall_number}. A certificate has been generated and the vendor will be notified.`)
-            navigate('/admin/vendors')
-        } catch (error) {
-            console.error('Error in handleRaffle:', error)
-            alert('An error occurred during stall assignment.')
-        } finally {
-            setRaffling(false)
-        }
+  const isUsernameAvailable = async (usernameToCheck: string): Promise<boolean> => {
+    if (usernameToCheck === mainVendorUsername) {
+      return false;
     }
+
+    const { data: existingUsers, error } = await supabase
+      .from('vendor_profiles')
+      .select('username, actual_occupant_username')
+      .or(`username.eq.${usernameToCheck},actual_occupant_username.eq.${usernameToCheck}`);
+
+    if (error) {
+      console.error('Error checking username availability:', error);
+      return false;
+    }
+
+    return !existingUsers || existingUsers.length === 0;
+  };
+
+  if (await isUsernameAvailable(baseUsername)) {
+    return baseUsername;
+  }
+
+  let counter = 1;
+  while (counter <= 99) {
+    const numberedUsername = `${baseUsername}${counter}`;
+
+    if (await isUsernameAvailable(numberedUsername)) {
+      return numberedUsername;
+    }
+
+    counter++;
+  }
+
+  return `${baseUsername}${Date.now()}`;
+};
+
+const handleRaffle = async () => {
+  if (!selectedStall || !selectedApplicant) return;
+
+  try {
+    setRaffling(true);
+
+    const { data: applicantData, error: fetchError } = await supabase
+      .from('vendor_applications')
+      .select(
+        'id, first_name, last_name, email, phone_number, business_name, middle_name, age, marital_status, spouse_name, complete_address, gender, birth_date, products_services_description, actual_occupant_first_name, actual_occupant_last_name, actual_occupant_phone, assigned_section_name'
+      )
+      .eq('id', selectedApplicant.id)
+      .single();
+
+    if (fetchError || !applicantData) {
+      console.error('Error fetching applicant data:', fetchError);
+      return alert('Failed to fetch applicant data. Please try again.');
+    }
+
+    const { data: marketSection, error: sectionError } = await supabase
+      .from('market_sections')
+      .select('id')
+      .eq('name', applicantData.assigned_section_name)
+      .single();
+
+    if (sectionError) {
+      console.error('Error fetching market section:', sectionError);
+      return alert('Failed to fetch market section. Please try again.');
+    }
+
+    const marketSectionId = marketSection?.id || null;
+
+    const vendorUsername = generateUsername(applicantData.first_name, applicantData.last_name);
+    const vendorPassword = `${vendorUsername}${selectedStall.stall_number.toLowerCase().replace('-', '')}`;
+    const vendorPasswordHash = await hashPassword(vendorPassword);
+
+    const actualOccupantUsername = await generateUniqueActualOccupantUsername(
+      applicantData.actual_occupant_first_name,
+      applicantData.actual_occupant_last_name,
+      vendorUsername
+    );
+    const actualOccupantPassword = `${actualOccupantUsername}${selectedStall.stall_number.toLowerCase().replace('-', '')}`;
+    const actualOccupantPasswordHash = await hashPassword(actualOccupantPassword);
+
+    const vendorProfile: Database['public']['Tables']['vendor_profiles']['Insert'] = {
+      id: applicantData.id,
+      vendor_application_id: applicantData.id,
+      first_name: applicantData.first_name,
+      last_name: applicantData.last_name,
+      email: applicantData.email,
+      phone_number: applicantData.phone_number,
+      business_name: applicantData.business_name,
+      market_section_id: marketSectionId,
+      stall_number: selectedStall.stall_number,
+      status: 'Pending',
+      application_status: 'pending',
+      middle_name: applicantData.middle_name,
+      age: applicantData.age,
+      marital_status: applicantData.marital_status,
+      spouse_name: applicantData.spouse_name,
+      complete_address: applicantData.complete_address,
+      gender: applicantData.gender,
+      birth_date: applicantData.birth_date,
+      products_services_description: applicantData.products_services_description,
+      actual_occupant_first_name: applicantData.actual_occupant_first_name,
+      actual_occupant_last_name: applicantData.actual_occupant_last_name,
+      actual_occupant_phone: applicantData.actual_occupant_phone,
+      username: vendorUsername,
+      password_hash: vendorPasswordHash,
+      actual_occupant_username: actualOccupantUsername,
+      actual_occupant_password_hash: actualOccupantPasswordHash,
+    };
+
+    const { error: insertError } = await supabase
+      .from('vendor_profiles')
+      .insert([vendorProfile]);
+
+    if (insertError) {
+      console.error('Error inserting vendor profile:', insertError);
+      return alert('Failed to assign stall. Please try again.');
+    }
+
+    const { error: updateError } = await supabase
+      .from('vendor_applications')
+      .update({
+        status: 'won_raffle',
+        assigned_stall_id: selectedStall.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', selectedApplicant.id);
+
+    if (updateError) {
+      console.error('Failed to update application status:', updateError);
+      return alert('Failed to update application status.');
+    }
+
+    const { error: stallUpdateError } = await supabase
+      .from('stalls')
+      .update({ status: 'occupied', vendor_profile_id: applicantData.id })
+      .eq('id', selectedStall.id);
+
+    if (stallUpdateError) {
+      console.error('Failed to update stall status:', stallUpdateError);
+      return alert('Failed to update stall status.');
+    }
+
+    alert(`Successfully Assigned Stall! ${applicantData.first_name} ${applicantData.last_name} has been assigned to ${selectedStall.stall_number}.`);
+    navigate('/admin/vendors');
+  } catch (error) {
+    console.error('Error in handleRaffle:', error);
+    alert('An error occurred during stall assignment.');
+  } finally {
+    setRaffling(false);
+  }
+};
+
 
     useEffect(() => {
         fetchAvailableStalls()
@@ -626,7 +715,10 @@ export default function Raffle() {
                                                                 startAutoSpin()
                                                             } else {
                                                                 setActiveIndex(index)
-                                                                setSelectedApplicant(applicant)
+                                                                setSelectedApplicant({
+                                                                  ...applicant,
+                                                                  assigned_stall_number: selectedStall.stall_number
+                                                                })
                                                                 setShowWinnerModal(true)
 
                                                                 // Auto-close modal after 2 seconds

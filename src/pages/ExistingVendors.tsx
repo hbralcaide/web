@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { supabase } from '../config/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -10,7 +10,6 @@ interface ExistingVendor {
   updated_at: string;
   market_section_id?: string;
   business_name: string;
-  business_type: string;
   username: string;
   role: string;
   status: string;
@@ -58,6 +57,7 @@ interface CredentialsModalProps {
   actualOccupantUsername?: string;
   actualOccupantPassword?: string;
   actualOccupantPhone?: string;
+  phone_number?: string;
 }
 
 interface VendorDetailsModalProps {
@@ -67,6 +67,31 @@ interface VendorDetailsModalProps {
   onSave: (vendor: Partial<ExistingVendor>) => void;
   sections: Section[];
   stalls: Stall[];
+  setAlertModal?: React.Dispatch<React.SetStateAction<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>>;
+}
+
+interface AlertModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+}
+
+interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'success' | 'error' | 'warning' | 'info';
 }
 
 const CredentialsModal: React.FC<CredentialsModalProps> = ({
@@ -82,7 +107,8 @@ const CredentialsModal: React.FC<CredentialsModalProps> = ({
   actualOccupantName,
   actualOccupantUsername,
   actualOccupantPassword,
-  actualOccupantPhone
+  actualOccupantPhone,
+  phone_number
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -156,6 +182,15 @@ const CredentialsModal: React.FC<CredentialsModalProps> = ({
                   <div className="bg-white rounded-lg p-4 shadow-sm">
                     <label className="block text-sm font-semibold text-gray-600 mb-2">Vendor Name</label>
                     <p className="text-xl font-bold text-gray-900">{vendorName}</p>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Phone Number</label>
+                    <div className="flex items-center gap-3">
+                      <p className="text-lg font-mono font-bold bg-gray-50 px-4 py-2 rounded-lg border-2 flex-1 text-gray-900">
+                        +63 {phone_number && phone_number.startsWith('9') ? phone_number : phone_number ? '9' + phone_number : ''}
+                      </p>
+                    </div>
                   </div>
 
                   {stallNumber && (
@@ -336,13 +371,207 @@ const CredentialsModal: React.FC<CredentialsModalProps> = ({
   );
 };
 
+// Alert Modal Component
+const AlertModal: React.FC<AlertModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  message,
+  type
+}) => {
+  if (!isOpen) return null;
+
+  const getIconByType = () => {
+    switch (type) {
+      case 'success':
+        return (
+          <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        );
+      case 'error':
+        return (
+          <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+            <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.194-.833-2.964 0L3.732 16.5C2.962 17.333 3.924 19 5.464 19z" />
+            </svg>
+          </div>
+        );
+      case 'warning':
+        return (
+          <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+            <svg className="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.194-.833-2.964 0L3.732 16.5C2.962 17.333 3.924 19 5.464 19z" />
+            </svg>
+          </div>
+        );
+      case 'info':
+      default:
+        return (
+          <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+            <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        );
+    }
+  };
+
+  const getBgColorByType = () => {
+    switch (type) {
+      case 'success': return 'bg-green-50';
+      case 'error': return 'bg-red-50';
+      case 'warning': return 'bg-yellow-50';
+      case 'info': 
+      default: return 'bg-blue-50';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+      <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className={`${getBgColorByType()} p-4 rounded-t-md -mt-5 -mx-5 mb-4`}>
+          {getIconByType()}
+          <h3 className="text-lg leading-6 font-medium text-gray-900 text-center mt-3">{title}</h3>
+        </div>
+        <div className="mt-2 px-7 py-3">
+          <div className="text-sm text-gray-500 text-center">
+            {message}
+          </div>
+        </div>
+        <div className="items-center px-4 py-3 flex justify-center">
+          <button
+            onClick={onClose}
+            className={`px-4 py-2 text-white text-base font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2
+              ${type === 'success' ? 'bg-green-500 hover:bg-green-600 focus:ring-green-500' : 
+                type === 'error' ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500' :
+                type === 'warning' ? 'bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500' :
+                'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'}`}
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ConfirmModal: React.FC<ConfirmModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  type = 'warning'
+}) => {
+  if (!isOpen) return null;
+
+  const getIconByType = () => {
+    switch (type) {
+      case 'success':
+        return (
+          <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        );
+      case 'error':
+        return (
+          <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+            <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.194-.833-2.964 0L3.732 16.5C2.962 17.333 3.924 19 5.464 19z" />
+            </svg>
+          </div>
+        );
+      case 'warning':
+        return (
+          <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+            <svg className="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.194-.833-2.964 0L3.732 16.5C2.962 17.333 3.924 19 5.464 19z" />
+            </svg>
+          </div>
+        );
+      case 'info':
+      default:
+        return (
+          <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+            <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        );
+    }
+  };
+
+  const getBgColorByType = () => {
+    switch (type) {
+      case 'success': return 'bg-green-50';
+      case 'error': return 'bg-red-50';
+      case 'warning': return 'bg-yellow-50';
+      case 'info': 
+      default: return 'bg-blue-50';
+    }
+  };
+
+  const getButtonColorByType = (isConfirm: boolean) => {
+    if (!isConfirm) return 'bg-gray-200 hover:bg-gray-300 text-gray-800';
+    
+    switch (type) {
+      case 'success': return 'bg-green-500 hover:bg-green-600 focus:ring-green-500 text-white';
+      case 'error': return 'bg-red-500 hover:bg-red-600 focus:ring-red-500 text-white';
+      case 'warning': return 'bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500 text-white';
+      case 'info': 
+      default: return 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500 text-white';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+      <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className={`${getBgColorByType()} p-4 rounded-t-md -mt-5 -mx-5 mb-4`}>
+          {getIconByType()}
+          <h3 className="text-lg leading-6 font-medium text-gray-900 text-center mt-3">{title}</h3>
+        </div>
+        <div className="mt-2 px-7 py-3">
+          <div className="text-sm text-gray-500 whitespace-pre-line">
+            {message}
+          </div>
+        </div>
+        <div className="items-center px-4 py-3 flex justify-center space-x-3">
+          <button
+            onClick={onClose}
+            className={`px-4 py-2 text-base font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${getButtonColorByType(false)}`}
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className={`px-4 py-2 text-base font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${getButtonColorByType(true)}`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
   isOpen,
   onClose,
   vendor,
   onSave,
   sections,
-  stalls
+  stalls,
+  setAlertModal
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showActualOccupant, setShowActualOccupant] = useState(false);
@@ -354,7 +583,6 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
     email: '',
     phone_number: '',
     business_name: '',
-    business_type: '',
     status: '',
     complete_address: '',
     products_services_description: '',
@@ -371,22 +599,31 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
     if (vendor && isOpen) {
       const hasActualOccupantData = vendor.actual_occupant_first_name || vendor.actual_occupant_last_name || vendor.actual_occupant_username || vendor.actual_occupant_phone;
       setShowActualOccupant(Boolean(hasActualOccupantData));
+      
+      // Remove the 9 prefix from phone numbers when loading for editing (since 9 is displayed separately)
+      const phoneWithout9Prefix = vendor.phone_number && vendor.phone_number.startsWith('9')
+        ? vendor.phone_number.substring(1)
+        : vendor.phone_number || '';
+        
+      const actualOccupantPhoneWithout9Prefix = vendor.actual_occupant_phone && vendor.actual_occupant_phone.startsWith('9')
+        ? vendor.actual_occupant_phone.substring(1)
+        : vendor.actual_occupant_phone || '';
+      
       setFormData({
         first_name: vendor.first_name || '',
         last_name: vendor.last_name || '',
         middle_name: vendor.middle_name || '',
         username: vendor.username || '',
         email: vendor.email || '',
-        phone_number: vendor.phone_number || '',
+        phone_number: phoneWithout9Prefix,
         business_name: vendor.business_name || '',
-        business_type: vendor.business_type || 'General',
         status: vendor.status || '',
         complete_address: vendor.complete_address || '',
         products_services_description: vendor.products_services_description || '',
         actual_occupant_first_name: vendor.actual_occupant_first_name || '',
         actual_occupant_last_name: vendor.actual_occupant_last_name || '',
         actual_occupant_username: vendor.actual_occupant_username || '',
-        actual_occupant_phone: vendor.actual_occupant_phone || '',
+        actual_occupant_phone: actualOccupantPhoneWithout9Prefix,
         actual_occupant_password_hash: vendor.actual_occupant_password_hash || '',
       });
     } else {
@@ -504,7 +741,6 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
     if (!formData.username.trim()) newErrors.username = 'Username is required';
     if (!formData.phone_number.trim()) newErrors.phone_number = 'Phone number is required';
     if (!formData.business_name.trim()) newErrors.business_name = 'Business name is required';
-    if (!formData.business_type.trim()) newErrors.business_type = 'Business type is required';
 
     console.log('Validation errors:', newErrors);
     setErrors(newErrors);
@@ -535,8 +771,18 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
       Object.keys(formData).forEach(key => {
         const value = formData[key as keyof typeof formData];
         if (value !== undefined) {
+          // Handle phone numbers to ensure '9' prefix
+          if (key === 'phone_number') {
+            const formattedPhone = value.trim() ? '9' + value.trim() : value.trim();
+            updatedVendorData[key as keyof typeof updatedVendorData] = formattedPhone || vendor[key as keyof typeof vendor] || '';
+          } 
+          // Handle actual occupant phone to ensure '9' prefix
+          else if (key === 'actual_occupant_phone') {
+            const formattedPhone = value.trim() ? '9' + value.trim() : value.trim();
+            (updatedVendorData as any)[key] = value.trim() === '' ? undefined : formattedPhone;
+          }
           // For required fields, ensure they're not empty strings
-          if (['first_name', 'last_name', 'username', 'phone_number', 'business_name', 'business_type'].includes(key)) {
+          else if (['first_name', 'last_name', 'username', 'business_name'].includes(key)) {
             updatedVendorData[key as keyof typeof updatedVendorData] = value.trim() || vendor[key as keyof typeof vendor] || '';
           } else {
             // For optional fields, convert empty strings to undefined for proper database storage
@@ -573,7 +819,12 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Error saving vendor:', error);
-      alert(`Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setAlertModal({
+        isOpen: true,
+        title: 'Save Failed',
+        message: `Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        type: 'error'
+      });
     } finally {
       setSaving(false);
     }
@@ -769,15 +1020,25 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
                     {isEditing ? (
-                      <input
-                        type="tel"
-                        value={formData.phone_number}
-                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 ${errors.phone_number ? 'border-red-400' : 'border-gray-300'}`}
-                        placeholder="09XX-XXX-XXXX"
-                      />
+                      <div className="flex">
+                        <div className="flex items-center bg-gray-200 px-3 rounded-l-lg">
+                          <span className="text-gray-600">+63</span>
+                        </div>
+                        <div className="flex-grow flex items-center border-t-2 border-b-2 border-gray-300 px-2">
+                          <span className="text-gray-700">9</span>
+                        </div>
+                        <input
+                          type="tel"
+                          value={formData.phone_number}
+                          onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                          className={`flex-grow px-3 py-2 border-2 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 ${errors.phone_number ? 'border-red-400' : ''}`}
+                          placeholder="XXXXXXXX"
+                        />
+                      </div>
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.phone_number || 'Not provided'}</p>
+                      <p className="text-lg font-medium text-gray-900 py-2">
+                        {vendor.phone_number ? `+63 ${vendor.phone_number}` : 'Not provided'}
+                      </p>
                     )}
                   </div>
 
@@ -833,31 +1094,7 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Business Type</label>
-                    {isEditing ? (
-                      <>
-                        <select
-                          value={formData.business_type}
-                          onChange={(e) => setFormData({ ...formData, business_type: e.target.value })}
-                          className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-300 focus:border-orange-500 ${errors.business_type ? 'border-red-400' : 'border-gray-300'}`}
-                        >
-                          <option value="">Select business type</option>
-                          <option value="General">General</option>
-                          <option value="Food">Food</option>
-                          <option value="Clothing">Clothing</option>
-                          <option value="Electronics">Electronics</option>
-                          <option value="Services">Services</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        {errors.business_type && (
-                          <p className="text-red-500 text-sm mt-1">{errors.business_type}</p>
-                        )}
-                      </>
-                    ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.business_type || 'General'}</p>
-                    )}
-                  </div>
+
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
@@ -1054,19 +1291,40 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                       Actual Occupant Phone
                     </label>
                     {isEditing ? (
-                      <input
-                        type="tel"
-                        value={formData.actual_occupant_phone}
-                        onChange={(e) => {
-                          // Allow only numbers, spaces, hyphens, and parentheses
-                          const value = e.target.value.replace(/[^0-9\s\-\(\)\+]/g, '');
-                          setFormData({ ...formData, actual_occupant_phone: value });
-                        }}
-                        className="w-full px-3 py-3 text-base border-2 border-gray-300 bg-white rounded-xl focus:ring-3 focus:ring-purple-300 focus:border-purple-500 transition-all duration-200"
-                        placeholder="e.g., 09123456789"
-                      />
+                      <div className="relative">
+                        <div className="flex w-full">
+                          <div className="rounded-xl border-2 border-gray-300 overflow-hidden flex w-full">
+                            <div className="bg-white py-3 px-4 flex items-center border-r border-gray-300">
+                              <span className="text-gray-500 text-base whitespace-nowrap">+63</span>
+                            </div>
+                            <div className="bg-white flex-1 py-3 pl-2 pr-4 flex items-center">
+                              <span className="text-gray-800 text-base mr-1">9</span>
+                              <input
+                                type="text"
+                                value={formData.actual_occupant_phone}
+                                onChange={(e) => {
+                                  // Only allow digits and limit to 8 digits (excluding the displayed 9 prefix)
+                                  const value = e.target.value;
+                                  const digits = value.replace(/\D/g, '');
+                                  setFormData({ ...formData, actual_occupant_phone: digits.substring(0, 8) });
+                                }}
+                                className="w-full border-none p-0 m-0 focus:ring-0 focus:outline-none bg-transparent"
+                                placeholder="12345678"
+                                maxLength={8}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-2">Enter 8 digits after +63 9 (e.g., 12345678)</p>
+                      </div>
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.actual_occupant_phone}</p>
+                      <p className="text-lg font-medium text-gray-900 py-2">
+                        {vendor.actual_occupant_phone ? 
+                          (vendor.actual_occupant_phone.startsWith('9') ? 
+                            `+63 ${vendor.actual_occupant_phone}` : 
+                            vendor.actual_occupant_phone) : 
+                          'Not provided'}
+                      </p>
                     )}
                     <p className="text-sm text-gray-500 mt-1">Contact number for actual occupant</p>
                   </div>
@@ -1113,6 +1371,7 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({
     last_name: '',
     middle_name: '',
     username: '',
+    phone_number: '',
     stall_id: '',
     section_id: '',
     actual_occupant_first_name: '',
@@ -1135,17 +1394,27 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({
       );
       setShowActualOccupant(hasActualOccupantData);
 
+      // Remove the 9 prefix from phone numbers when loading for editing (since 9 is displayed separately)
+      const phoneWithout9Prefix = editingVendor.phone_number && editingVendor.phone_number.startsWith('9')
+        ? editingVendor.phone_number.substring(1)
+        : editingVendor.phone_number || '';
+        
+      const actualOccupantPhoneWithout9Prefix = editingVendor.actual_occupant_phone && editingVendor.actual_occupant_phone.startsWith('9')
+        ? editingVendor.actual_occupant_phone.substring(1)
+        : editingVendor.actual_occupant_phone || '';
+
       setFormData({
         first_name: editingVendor.first_name || '',
         last_name: editingVendor.last_name || '',
         middle_name: editingVendor.middle_name || '',
         username: editingVendor.username || '',
+        phone_number: phoneWithout9Prefix,
         stall_id: '',
         section_id: '',
         actual_occupant_first_name: editingVendor.actual_occupant_first_name || '',
         actual_occupant_last_name: editingVendor.actual_occupant_last_name || '',
         actual_occupant_username: editingVendor.actual_occupant_username || '',
-        actual_occupant_phone: editingVendor.actual_occupant_phone || '',
+        actual_occupant_phone: actualOccupantPhoneWithout9Prefix,
       });
     } else {
       setShowActualOccupant(false);
@@ -1154,6 +1423,7 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({
         last_name: '',
         middle_name: '',
         username: '',
+        phone_number: '', // Will be displayed after the +63 9 prefix in UI
         stall_id: '',
         section_id: '',
         actual_occupant_first_name: '',
@@ -1322,6 +1592,13 @@ const generateUniqueUsername = async (firstName: string, lastName: string): Prom
     if (!formData.username.trim()) newErrors.username = 'Username is required';
     if (!formData.stall_id.trim()) newErrors.stall_id = 'Stall is required';
     if (!formData.section_id.trim()) newErrors.section_id = 'Section is required';
+    
+    // Phone number validation
+    if (!formData.phone_number) {
+      newErrors.phone_number = 'Phone number is required';
+    } else if (formData.phone_number.length < 8) {
+      newErrors.phone_number = 'Phone number must be 8 digits after the +63 9 prefix';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -1334,8 +1611,11 @@ const generateUniqueUsername = async (firstName: string, lastName: string): Prom
 
     setSaving(true);
     try {
+      // Add '9' prefix to phone numbers when saving
       const vendorData: Partial<ExistingVendor> & { stall_id?: string; section_id?: string } = {
         ...formData,
+        phone_number: '9' + formData.phone_number, // The 9 is shown separately in UI
+        actual_occupant_phone: formData.actual_occupant_phone ? '9' + formData.actual_occupant_phone : formData.actual_occupant_phone, // Add 9 prefix if exists
         status: 'Active',
         role: 'vendor',
         application_status: 'approved',
@@ -1405,7 +1685,7 @@ const generateUniqueUsername = async (firstName: string, lastName: string): Prom
                     </span>
                   </label>
                   <input
-                    type
+                    type="text"
                     value={formData.first_name}
                     onChange={(e) => {
                       const capitalizedName = capitalizeName(e.target.value);
@@ -1469,6 +1749,49 @@ const generateUniqueUsername = async (firstName: string, lastName: string): Prom
                     placeholder="M"
                   />
                   <p className="text-sm text-gray-500 mt-2">Optional - First letter only</p>
+                </div>
+
+                <div className="lg:col-span-3 mt-2">
+                  <label className="block text-base font-semibold text-gray-700 mb-2">
+                    <span className="flex items-center">
+                      Phone Number
+                      <span className="text-red-500 ml-1 text-lg">*</span>
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <div className="flex w-full">
+                      <div className={`rounded-xl border-2 overflow-hidden flex w-full ${errors.phone_number ? 'border-red-400' : 'border-gray-300'}`}>
+                        <div className="bg-white py-3 px-4 flex items-center border-r border-gray-300">
+                          <span className="text-gray-500 text-base whitespace-nowrap">+63</span>
+                        </div>
+                        <div className={`flex-1 py-3 pl-2 pr-4 flex items-center ${errors.phone_number ? 'bg-red-50' : 'bg-white'}`}>
+                          <span className="text-gray-800 text-base mr-1">9</span>
+                          <input
+                            type="text"
+                            value={formData.phone_number}
+                            onChange={(e) => {
+                              // Only allow digits and limit to 9 digits (excluding the displayed 9 prefix)
+                              const value = e.target.value;
+                              const digits = value.replace(/\D/g, '');
+                              setFormData({ ...formData, phone_number: digits.substring(0, 9) });
+                            }}
+                            className="w-full border-none p-0 m-0 focus:ring-0 focus:outline-none bg-transparent"
+                            placeholder="12345678"
+                            maxLength={9}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">Enter 9 digits after +63 9 (e.g., 12345678)</p>
+                  </div>
+                  {errors.phone_number && (
+                    <p className="text-red-600 text-sm mt-2 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {errors.phone_number}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1723,18 +2046,32 @@ const generateUniqueUsername = async (firstName: string, lastName: string): Prom
                       <label className="block text-base font-semibold text-gray-700 mb-2">
                         Actual Occupant Phone
                       </label>
-                      <input
-                        type="tel"
-                        value={formData.actual_occupant_phone}
-                        onChange={(e) => {
-                          // Allow only numbers, spaces, hyphens, and parentheses
-                          const value = e.target.value.replace(/[^0-9\s\-\(\)\+]/g, '');
-                          setFormData({ ...formData, actual_occupant_phone: value });
-                        }}
-                        className="w-full px-3 py-3 text-base border-2 border-gray-300 bg-white rounded-xl focus:ring-3 focus:ring-purple-300 focus:border-purple-500 transition-all duration-200"
-                        placeholder="e.g., 09123456789"
-                      />
-                      <p className="text-sm text-gray-500 mt-1">Contact number for actual occupant</p>
+                      <div className="relative">
+                        <div className="flex w-full">
+                          <div className="rounded-xl border-2 border-gray-300 overflow-hidden flex w-full">
+                            <div className="bg-white py-3 px-4 flex items-center border-r border-gray-300">
+                              <span className="text-gray-500 text-base whitespace-nowrap">+63</span>
+                            </div>
+                            <div className="bg-white flex-1 py-3 pl-2 pr-4 flex items-center">
+                              <span className="text-gray-800 text-base mr-1">9</span>
+                              <input
+                                type="text"
+                                value={formData.actual_occupant_phone}
+                                onChange={(e) => {
+                                  // Only allow digits and limit to 9 digits (excluding the displayed 9 prefix)
+                                  const value = e.target.value;
+                                  const digits = value.replace(/\D/g, '');
+                                  setFormData({ ...formData, actual_occupant_phone: digits.substring(0, 9) });
+                                }}
+                                className="w-full border-none p-0 m-0 focus:ring-0 focus:outline-none bg-transparent"
+                                placeholder="12345678"
+                                maxLength={9}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-2">Enter 9 digits after +63 9 (e.g., 12345678)</p>
+                      </div>
                     </div>
                   </div>
                 </>
@@ -1829,6 +2166,8 @@ export default function ExistingVendors() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Active card tracking for filtering
+  const [activeCard, setActiveCard] = useState<'total' | 'active' | 'inactive' | 'withStalls' | 'pending' | null>(null);
 
   // Credentials modal state
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
@@ -1843,12 +2182,33 @@ export default function ExistingVendors() {
     actualOccupantName: '',
     actualOccupantUsername: '',
     actualOccupantPassword: '',
-    actualOccupantPhone: ''
+    actualOccupantPhone: '',
+    phone_number: ''
   });
 
   // Vendor details modal state
   const [showVendorDetailsModal, setShowVendorDetailsModal] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<ExistingVendor | null>(null);
+  
+  // Alert modal state
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'warning' | 'info'
+  });
+  
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'warning' as 'success' | 'error' | 'warning' | 'info',
+    onConfirm: () => {}
+  });
+  
+  // Selected vendors state
+  const [selectedVendors, setSelectedVendors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchVendors();
@@ -1920,9 +2280,20 @@ export default function ExistingVendors() {
   const handleDeleteVendor = async (vendor: ExistingVendor) => {
     const confirmMessage = `Delete Vendor: ${vendor.first_name} ${vendor.last_name}\n\nThis will:\n• Remove the vendor from the system\n• Free up their assigned stall (if any)\n• This action cannot be undone\n\nAre you sure you want to continue?`;
 
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
+    // Show confirm modal instead of window.confirm
+    setConfirmModal({
+      isOpen: true,
+      title: `Delete Vendor: ${vendor.first_name} ${vendor.last_name}`,
+      message: confirmMessage,
+      type: 'warning',
+      onConfirm: async () => {
+        await performDeleteVendor(vendor);
+      }
+    });
+    return;
+  };
+  
+  const performDeleteVendor = async (vendor: ExistingVendor) => {
 
     setDeletingId(vendor.id);
     try {
@@ -1941,7 +2312,12 @@ export default function ExistingVendors() {
 
         if (stallError) {
           console.error('Error freeing up stall:', stallError);
-          alert('Failed to free up the stall. Please check manually.');
+          setAlertModal({
+            isOpen: true,
+            title: 'Stall Error',
+            message: 'Failed to free up the stall. Please check manually.',
+            type: 'warning'
+          });
         }
       }
 
@@ -1953,7 +2329,12 @@ export default function ExistingVendors() {
 
       if (deleteError) {
         console.error('Error deleting vendor:', deleteError);
-        alert(`Failed to delete vendor: ${deleteError.message}`);
+        setAlertModal({
+          isOpen: true,
+          title: 'Deletion Failed',
+          message: `Failed to delete vendor: ${deleteError.message}`,
+          type: 'error'
+        });
         return;
       }
 
@@ -1963,38 +2344,22 @@ export default function ExistingVendors() {
 
       const stallMessage = assignedStall ? ` Stall ${assignedStall.stall_number} is now available.` : '';
 
-      // Show success message in credentials modal format for consistency
-      setCredentialsData({
-        username: '',
-        password: '',
-        vendorName: `${vendor.first_name} ${vendor.last_name}`,
-        stallNumber: assignedStall?.stall_number || '',
-        isSuccess: true,
-        message: `Vendor has been successfully removed from the system.${stallMessage ? ' ' + stallMessage : ''}`,
-        operationType: 'delete',
-        actualOccupantName: '',
-        actualOccupantUsername: '',
-        actualOccupantPassword: '',
-        actualOccupantPhone: ''
+      // Show success modal
+      setAlertModal({
+        isOpen: true,
+        title: 'Vendor Removed',
+        message: `Vendor "${vendor.first_name} ${vendor.last_name}" has been successfully removed from the system.${stallMessage ? ' ' + stallMessage : ''}`,
+        type: 'success'
       });
-      setShowCredentialsModal(true);
 
     } catch (error) {
       console.error('Error deleting vendor:', error);
-      setCredentialsData({
-        username: '',
-        password: '',
-        vendorName: `${vendor.first_name} ${vendor.last_name}`,
-        stallNumber: '',
-        isSuccess: false,
-        message: 'Failed to delete vendor. Please try again or contact system administrator.',
-        operationType: 'delete',
-        actualOccupantName: '',
-        actualOccupantUsername: '',
-        actualOccupantPassword: '',
-        actualOccupantPhone: ''
+      setAlertModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to delete vendor "${vendor.first_name} ${vendor.last_name}". Please try again or contact system administrator.`,
+        type: 'error'
       });
-      setShowCredentialsModal(true);
     } finally {
       setDeletingId(null);
     }
@@ -2008,14 +2373,24 @@ export default function ExistingVendors() {
       if (!user) {
         const errorMsg = 'You must be logged in to update vendors.';
         console.error(errorMsg);
-        alert(errorMsg);
+        setAlertModal({
+          isOpen: true,
+          title: 'Authentication Error',
+          message: errorMsg,
+          type: 'error'
+        });
         throw new Error(errorMsg);
       }
 
       if (!vendorData.id) {
         const errorMsg = 'Vendor ID is required for updates.';
         console.error(errorMsg);
-        alert(errorMsg);
+        setAlertModal({
+          isOpen: true,
+          title: 'Update Error',
+          message: errorMsg,
+          type: 'error'
+        });
         throw new Error(errorMsg);
       }
 
@@ -2032,7 +2407,7 @@ export default function ExistingVendors() {
         ...updateData,
         // Ensure required string fields are not null
         business_name: updateData.business_name || '',
-        business_type: updateData.business_type || '',
+
         username: updateData.username || '',
         first_name: updateData.first_name || '',
         last_name: updateData.last_name || '',
@@ -2064,7 +2439,12 @@ export default function ExistingVendors() {
           errorMsg = `Required field missing: ${error.message}`;
         }
 
-        alert(errorMsg);
+        setAlertModal({
+          isOpen: true,
+          title: 'Database Error',
+          message: errorMsg,
+          type: 'error'
+        });
         throw new Error(errorMsg);
       }
 
@@ -2076,8 +2456,16 @@ export default function ExistingVendors() {
 
       console.log('Vendor update process completed successfully');
 
-      // Show success message
-      alert('Vendor updated successfully!');
+      // Show success message using modal instead of alert
+      setAlertModal({
+        isOpen: true,
+        title: 'Update Successful',
+        message: 'Vendor information has been updated successfully!',
+        type: 'success'
+      });
+      
+      // Close the vendor details modal
+      setShowVendorDetailsModal(false);
 
     } catch (error) {
       console.error('Error in handleVendorEdit:', error);
@@ -2096,7 +2484,12 @@ export default function ExistingVendors() {
     try {
       // Check if user is authenticated
       if (!user) {
-        alert('You must be logged in to add vendors.');
+        setAlertModal({
+          isOpen: true,
+          title: 'Authentication Required',
+          message: 'You must be logged in to add vendors.',
+          type: 'warning'
+        });
         return;
       }
 
@@ -2130,12 +2523,12 @@ export default function ExistingVendors() {
         middle_name: vendorData.middle_name || null,
         username: vendorData.username || '',
         email: null, // Vendor will add email later
-        phone_number: '', // Required field, empty for now
-        business_name: '', // Will be filled by vendor in mobile app
-        business_type: 'General', // Required field, vendor will update later
-        status: 'Pending', // Match default from schema
+        phone_number: vendorData.phone_number || '', // Use the phone number from vendorData
+        business_name: vendorData.business_name || '', // Use the business name from vendorData
+
+        status: 'Active', // Set to Active instead of Pending
         role: 'vendor',
-        application_status: 'pending', // Match default from schema
+        application_status: 'approved', // Set to approved instead of pending
         signup_method: 'manual_entry',
         market_section_id: vendorData.section_id || null,
         password_hash: hashedPassword || null, // Store hashed password
@@ -2161,19 +2554,34 @@ export default function ExistingVendors() {
         console.error('Vendor data:', vendorData);
 
         if (vendorError.code === '23502') {
-          alert(`Database constraint error: ${vendorError.message}. Please ensure all required fields are filled.`);
+          setAlertModal({
+            isOpen: true,
+            title: 'Database Error',
+            message: `Database constraint error: ${vendorError.message}. Please ensure all required fields are filled.`,
+            type: 'error'
+          });
         } else if (vendorError.code === '42501') {
-          alert('Permission denied. Please check admin permissions.');
+          setAlertModal({
+            isOpen: true,
+            title: 'Permission Error',
+            message: 'Permission denied. Please check admin permissions.',
+            type: 'error'
+          });
         } else {
-          alert(`Failed to add vendor: ${vendorError.message || 'Unknown error'}`);
+          setAlertModal({
+            isOpen: true,
+            title: 'Add Vendor Error',
+            message: `Failed to add vendor: ${vendorError.message || 'Unknown error'}`,
+            type: 'error'
+          });
         }
         return;
       }
 
       if (vendorProfileData) {
         let stallAssignmentMessage = generatedPassword ?
-          `Vendor added successfully!\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: ${generatedPassword}\n\nPlease share these credentials with the vendor.` :
-          `Vendor added successfully!\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: [Will be set when stall is assigned]\n\nNote: Password format is username + stall number (e.g., username + e1)`;
+          `Vendor added successfully!\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: ${generatedPassword}\nPhone Number: +63 ${vendorData.phone_number}\n\nPlease share these credentials with the vendor.` :
+          `Vendor added successfully!\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPhone Number: +63 ${vendorData.phone_number}\nPassword: [Will be set when stall is assigned]\n\nNote: Password format is username + stall number (e.g., username + e1)`;
 
         if (vendorData.stall_id) {
           // Find the selected stall to get its stall_number
@@ -2192,8 +2600,8 @@ export default function ExistingVendors() {
             if (updateError) {
               console.error('Error assigning stall number:', updateError);
               stallAssignmentMessage = generatedPassword ?
-                `Vendor created but failed to assign stall number.\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: ${generatedPassword}\n\nPlease share these credentials with the vendor.` :
-                `Vendor created but failed to assign stall number.\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: [Will be set when stall is manually assigned]\n\nNote: Password format is username + stall number (e.g., username + e1)`;
+                `Vendor created but failed to assign stall number.\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: ${generatedPassword}\nPhone Number: +63 ${vendorData.phone_number}\n\nPlease share these credentials with the vendor.` :
+                `Vendor created but failed to assign stall number.\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPhone Number: +63 ${vendorData.phone_number}\nPassword: [Will be set when stall is manually assigned]\n\nNote: Password format is username + stall number (e.g., username + e1)`;
             } else {
               // Try to update the stalls table to mark it as occupied
               console.log('Attempting to update stall:', {
@@ -2217,7 +2625,7 @@ export default function ExistingVendors() {
                   vendorId: (vendorProfileData as any).id,
                   error: stallError
                 });
-                stallAssignmentMessage = `Vendor and stall number assigned, but stall status update failed. Please check stalls table manually.\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: ${generatedPassword}\n\nPlease share these credentials with the vendor.`;
+                stallAssignmentMessage = `Vendor and stall number assigned, but stall status update failed. Please check stalls table manually.\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: ${generatedPassword}\nPhone Number: +63 ${vendorData.phone_number}\n\nPlease share these credentials with the vendor.`;
               } else {
                 console.log('Successfully assigned vendor to stall:', {
                   vendorId: (vendorProfileData as any).id,
@@ -2225,7 +2633,7 @@ export default function ExistingVendors() {
                   stallNumber: selectedStall.stall_number
                 });
 
-                stallAssignmentMessage = `Vendor added and stall assigned successfully!\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: ${generatedPassword}\n\nPlease share these credentials with the vendor. The password is securely hashed in the database.`;
+                stallAssignmentMessage = `Vendor added and stall assigned successfully!\n\nVendor Login Credentials:\nUsername: ${vendorData.username}\nPassword: ${generatedPassword}\nPhone Number: +63 ${vendorData.phone_number}\n\nPlease share these credentials with the vendor. The password is securely hashed in the database.`;
               }
             }
           }
@@ -2251,13 +2659,19 @@ export default function ExistingVendors() {
           actualOccupantName: actualOccupantFullName,
           actualOccupantUsername: vendorData.actual_occupant_username || '',
           actualOccupantPassword: actualOccupantGeneratedPassword,
-          actualOccupantPhone: vendorData.actual_occupant_phone || ''
+          actualOccupantPhone: vendorData.actual_occupant_phone || '',
+          phone_number: vendorData.phone_number || ''
         });
         setShowCredentialsModal(true);
       }
     } catch (error) {
       console.error('Error adding vendor:', error);
-      alert('Failed to add vendor. Please try again.');
+      setAlertModal({
+        isOpen: true,
+        title: 'Error',
+        message: 'Failed to add vendor. Please try again.',
+        type: 'error'
+      });
     }
   };
 
@@ -2265,10 +2679,17 @@ export default function ExistingVendors() {
   const filteredAndSortedVendors = React.useMemo(() => {
     let filtered = vendors.filter(vendor => {
       const matchesSearch = searchTerm === '' ||
+        // Primary vendor details
         vendor.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vendor.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vendor.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vendor.stall_number?.toLowerCase().includes(searchTerm.toLowerCase());
+        vendor.stall_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.phone_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        // Actual occupant details
+        vendor.actual_occupant_first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.actual_occupant_last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.actual_occupant_username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.actual_occupant_phone?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus = statusFilter === 'all' ||
         vendor.status?.toLowerCase() === statusFilter.toLowerCase();
@@ -2276,8 +2697,12 @@ export default function ExistingVendors() {
       const assignedStall = stalls.find(stall => stall.vendor_profile_id === vendor.id);
       const vendorSectionId = assignedStall?.section_id || vendor.market_section_id;
       const matchesSection = sectionFilter === 'all' || vendorSectionId === sectionFilter;
+      
+      // Special handling for the "With Stalls" filter
+      const hasStall = assignedStall || vendor.stall_number;
+      const matchesWithStalls = activeCard !== 'withStalls' || hasStall;
 
-      return matchesSearch && matchesStatus && matchesSection;
+      return matchesSearch && matchesStatus && matchesSection && matchesWithStalls;
     });
 
     // Sort the filtered results
@@ -2311,25 +2736,278 @@ export default function ExistingVendors() {
     });
 
     return filtered;
-  }, [vendors, searchTerm, statusFilter, sectionFilter, sortBy, sortOrder, stalls]);
+  }, [vendors, searchTerm, statusFilter, sectionFilter, sortBy, sortOrder, stalls, activeCard]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedVendors.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedVendors = filteredAndSortedVendors.slice(startIndex, startIndex + itemsPerPage);
+  
+  // Selection handlers
+  const toggleVendorSelection = (event: React.MouseEvent, vendorId: string) => {
+    event.stopPropagation(); // Prevent row click from triggering
+    const newSelected = new Set(selectedVendors);
+    
+    if (newSelected.has(vendorId)) {
+      newSelected.delete(vendorId);
+    } else {
+      newSelected.add(vendorId);
+    }
+    
+    setSelectedVendors(newSelected);
+  };
+  
+  const toggleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      // Select all vendors on the current page
+      const newSelected = new Set(selectedVendors);
+      paginatedVendors.forEach(vendor => {
+        newSelected.add(vendor.id);
+      });
+      setSelectedVendors(newSelected);
+    } else {
+      // Unselect all vendors on the current page
+      const newSelected = new Set(selectedVendors);
+      paginatedVendors.forEach(vendor => {
+        newSelected.delete(vendor.id);
+      });
+      setSelectedVendors(newSelected);
+    }
+  };
+  
+  // Check if all vendors on current page are selected
+  const allSelected = paginatedVendors.length > 0 && paginatedVendors.every(vendor => selectedVendors.has(vendor.id));
+  
+  // Function to activate selected vendors
+  const activateSelectedVendors = async () => {
+    console.log("Activate button clicked, selected vendors:", selectedVendors);
+    if (selectedVendors.size === 0) {
+      setAlertModal({
+        isOpen: true,
+        title: 'No Vendors Selected',
+        message: 'Please select at least one vendor to activate.',
+        type: 'warning'
+      });
+      return;
+    }
+    
+    setConfirmModal({
+      isOpen: true,
+      title: 'Activate Vendors',
+      message: `Are you sure you want to set ${selectedVendors.size} vendor${selectedVendors.size === 1 ? '' : 's'} to Active status?`,
+      type: 'info',
+      onConfirm: async () => {
+        try {
+          console.log("Confirmation accepted, proceeding with activation");
+          const selectedIds = Array.from(selectedVendors);
+          console.log("Selected IDs:", selectedIds);
+          
+          const updates = selectedIds.map(id => ({
+            id,
+            status: 'Active', // Changed from lowercase 'active' to title case 'Active' to match DB schema
+            updated_at: new Date().toISOString()
+          }));
+          
+          console.log("Updates to be applied:", updates);
+          
+          // Update each vendor individually instead of using upsert
+          let hasErrors = false;
+          
+          // Update each vendor's status to active
+          for (const vendorId of selectedIds) {
+            console.log(`Updating vendor ${vendorId} to Active status`);
+            const { error } = await (supabase as any)
+              .from('vendor_profiles')
+              .update({
+                status: 'Active', // Changed from lowercase 'active' to title case 'Active'
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', vendorId);
+            
+            if (error) {
+              console.error(`Error activating vendor ${vendorId}:`, error);
+              hasErrors = true;
+            }
+          }
+          
+          const error = hasErrors ? { message: "Some vendors could not be activated" } : null;
+            
+          if (error) {
+            throw error;
+          }
+          
+          // Add a small delay before refreshing to ensure database consistency
+          console.log("Updates completed, refreshing data after short delay");
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Refresh data
+          await fetchVendors();
+          
+          // Show success message
+          setAlertModal({
+            isOpen: true,
+            title: 'Vendors Activated',
+            message: `Successfully activated ${selectedVendors.size} vendor${selectedVendors.size === 1 ? '' : 's'}.`,
+            type: 'success'
+          });
+          
+          // Clear selections
+          setSelectedVendors(new Set());
+        } catch (error) {
+          console.error('Error activating vendors:', error);
+          setAlertModal({
+            isOpen: true,
+            title: 'Activation Failed',
+            message: `Failed to activate vendors: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            type: 'error'
+          });
+        }
+      }
+    });
+  };
+  
+  // Function to inactivate selected vendors
+  const inactivateSelectedVendors = async () => {
+    console.log("Inactivate button clicked, selected vendors:", selectedVendors);
+    if (selectedVendors.size === 0) {
+      setAlertModal({
+        isOpen: true,
+        title: 'No Vendors Selected',
+        message: 'Please select at least one vendor to inactivate.',
+        type: 'warning'
+      });
+      return;
+    }
+    
+    setConfirmModal({
+      isOpen: true,
+      title: 'Inactivate Vendors',
+      message: `Are you sure you want to set ${selectedVendors.size} vendor${selectedVendors.size === 1 ? '' : 's'} to Inactive status?`,
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          console.log("Confirmation accepted, proceeding with inactivation");
+          const selectedIds = Array.from(selectedVendors);
+          console.log("Selected IDs:", selectedIds);
+          
+          const updates = selectedIds.map(id => ({
+            id,
+            status: 'Inactive', // Using title case to match DB schema
+            updated_at: new Date().toISOString()
+          }));
+          
+          console.log("Updates to be applied:", updates);
+          
+          // Update each vendor individually instead of using upsert
+          let hasErrors = false;
+          
+          // Update each vendor's status to inactive
+          for (const vendorId of selectedIds) {
+            console.log(`Updating vendor ${vendorId} to Inactive status`);
+            const { error } = await (supabase as any)
+              .from('vendor_profiles')
+              .update({
+                status: 'Inactive', // Using title case to match DB schema
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', vendorId);
+            
+            if (error) {
+              console.error(`Error inactivating vendor ${vendorId}:`, error);
+              hasErrors = true;
+            }
+          }
+          
+          const error = hasErrors ? { message: "Some vendors could not be inactivated" } : null;
+            
+          if (error) {
+            throw error;
+          }
+          
+          // Add a small delay before refreshing to ensure database consistency
+          console.log("Updates completed, refreshing data after short delay");
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Refresh data
+          await fetchVendors();
+          
+          // Show success message
+          setAlertModal({
+            isOpen: true,
+            title: 'Vendors Inactivated',
+            message: `Successfully inactivated ${selectedVendors.size} vendor${selectedVendors.size === 1 ? '' : 's'}.`,
+            type: 'success'
+          });
+          
+          // Clear selections
+          setSelectedVendors(new Set());
+        } catch (error) {
+          console.error('Error inactivating vendors:', error);
+          setAlertModal({
+            isOpen: true,
+            title: 'Inactivation Failed',
+            message: `Failed to inactivate vendors: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            type: 'error'
+          });
+        }
+      }
+    });
+  };
 
   // Statistics
   const stats = React.useMemo(() => {
     const total = vendors.length;
     const active = vendors.filter(v => v.status?.toLowerCase() === 'active').length;
+    const inactive = vendors.filter(v => v.status?.toLowerCase() === 'inactive').length;
     const withStalls = vendors.filter(v => {
       const assignedStall = stalls.find(stall => stall.vendor_profile_id === v.id);
       return assignedStall || v.stall_number;
     }).length;
     const pending = vendors.filter(v => v.status?.toLowerCase() === 'pending').length;
 
-    return { total, active, pending, withStalls, withoutStalls: total - withStalls };
+    return { total, active, inactive, pending, withStalls, withoutStalls: total - withStalls };
   }, [vendors, stalls]);
+
+  // Handle card click to apply filtering
+  const handleCardClick = (cardType: 'total' | 'active' | 'inactive' | 'withStalls' | 'pending') => {
+    // If the same card is clicked again, remove the filter
+    if (activeCard === cardType) {
+      setActiveCard(null);
+      clearFilters();
+      return;
+    }
+    
+    setActiveCard(cardType);
+    
+    // Apply the appropriate filters
+    switch (cardType) {
+      case 'total':
+        // Show all vendors
+        setStatusFilter('all');
+        setSectionFilter('all');
+        break;
+      case 'active':
+        // Filter by active status
+        setStatusFilter('active');
+        break;
+      case 'inactive':
+        // Filter by inactive status
+        setStatusFilter('inactive');
+        break;
+      case 'withStalls':
+        // We're filtering in the filtered vendors logic, so just set a marker
+        setStatusFilter('all');
+        // Other filters will be handled in the vendor filtering logic
+        break;
+      case 'pending':
+        // Filter by pending status
+        setStatusFilter('pending');
+        break;
+    }
+    
+    // Reset to first page when changing filters
+    setCurrentPage(1);
+  };
 
   // Clear filters function
   const clearFilters = () => {
@@ -2338,6 +3016,7 @@ export default function ExistingVendors() {
     setSectionFilter('all');
     setSortBy('name');
     setSortOrder('asc');
+    setActiveCard(null);
     setCurrentPage(1);
   };
 
@@ -2378,12 +3057,28 @@ export default function ExistingVendors() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+      <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        {/* Total Vendors Card */}
+        <div 
+          onClick={() => handleCardClick('total')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCardClick('total');
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-pressed={activeCard === 'total'}
+          className={`bg-white overflow-hidden shadow rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+            ${activeCard === 'total' 
+              ? 'border-indigo-500 ring-2 ring-indigo-200' 
+              : 'border-gray-200 hover:border-gray-300'}`}
+        >
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`h-6 w-6 ${activeCard === 'total' ? 'text-indigo-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20a3 3 0 01-3-3v-2a3 3 0 013-3 3 3 0 013 3v2a3 3 0 01-3 3zm8-10a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
@@ -2393,15 +3088,42 @@ export default function ExistingVendors() {
                   <dd className="text-lg font-medium text-gray-900">{stats.total}</dd>
                 </dl>
               </div>
+              {activeCard === 'total' && (
+                <div className="ml-2">
+                  <div className="flex items-center justify-center h-6 w-6 rounded-full bg-indigo-100">
+                    <svg className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+        {/* Active Vendors Card */}
+        <div 
+          onClick={() => handleCardClick('active')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCardClick('active');
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-pressed={activeCard === 'active'}
+          className={`bg-white overflow-hidden shadow rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
+            ${activeCard === 'active' 
+              ? 'border-green-500 ring-2 ring-green-200' 
+              : 'border-gray-200 hover:border-gray-300'}`}
+        >
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="h-2 w-2 rounded-full bg-green-500 mr-1"></div>
+                <div className={`h-6 w-6 rounded-full ${activeCard === 'active' ? 'bg-green-500' : 'bg-green-100'} flex items-center justify-center`}>
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                </div>
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -2409,15 +3131,83 @@ export default function ExistingVendors() {
                   <dd className="text-lg font-medium text-green-600">{stats.active}</dd>
                 </dl>
               </div>
+              {activeCard === 'active' && (
+                <div className="ml-2">
+                  <div className="flex items-center justify-center h-6 w-6 rounded-full bg-green-100">
+                    <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Inactive Vendors Card */}
+        <div 
+          onClick={() => handleCardClick('inactive')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCardClick('inactive');
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-pressed={activeCard === 'inactive'}
+          className={`bg-white overflow-hidden shadow rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500
+            ${activeCard === 'inactive' 
+              ? 'border-gray-500 ring-2 ring-gray-200' 
+              : 'border-gray-200 hover:border-gray-300'}`}
+        >
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className={`h-6 w-6 rounded-full ${activeCard === 'inactive' ? 'bg-gray-500' : 'bg-gray-100'} flex items-center justify-center`}>
+                  <div className="h-2 w-2 rounded-full bg-gray-500"></div>
+                </div>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Inactive Vendors</dt>
+                  <dd className="text-lg font-medium text-gray-600">{stats.inactive}</dd>
+                </dl>
+              </div>
+              {activeCard === 'inactive' && (
+                <div className="ml-2">
+                  <div className="flex items-center justify-center h-6 w-6 rounded-full bg-gray-100">
+                    <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+        {/* With Stalls Card */}
+        <div 
+          onClick={() => handleCardClick('withStalls')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCardClick('withStalls');
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-pressed={activeCard === 'withStalls'}
+          className={`bg-white overflow-hidden shadow rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+            ${activeCard === 'withStalls' 
+              ? 'border-blue-500 ring-2 ring-blue-200' 
+              : 'border-gray-200 hover:border-gray-300'}`}
+        >
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`h-6 w-6 ${activeCard === 'withStalls' ? 'text-blue-500' : 'text-blue-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
@@ -2427,15 +3217,42 @@ export default function ExistingVendors() {
                   <dd className="text-lg font-medium text-blue-600">{stats.withStalls}</dd>
                 </dl>
               </div>
+              {activeCard === 'withStalls' && (
+                <div className="ml-2">
+                  <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-100">
+                    <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+        {/* Pending Card */}
+        <div 
+          onClick={() => handleCardClick('pending')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCardClick('pending');
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-pressed={activeCard === 'pending'}
+          className={`bg-white overflow-hidden shadow rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500
+            ${activeCard === 'pending' 
+              ? 'border-yellow-500 ring-2 ring-yellow-200' 
+              : 'border-gray-200 hover:border-gray-300'}`}
+        >
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="h-2 w-2 rounded-full bg-yellow-500 mr-1"></div>
+                <div className={`h-6 w-6 rounded-full ${activeCard === 'pending' ? 'bg-yellow-500' : 'bg-yellow-100'} flex items-center justify-center`}>
+                  <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                </div>
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -2443,6 +3260,15 @@ export default function ExistingVendors() {
                   <dd className="text-lg font-medium text-yellow-600">{stats.pending}</dd>
                 </dl>
               </div>
+              {activeCard === 'pending' && (
+                <div className="ml-2">
+                  <div className="flex items-center justify-center h-6 w-6 rounded-full bg-yellow-100">
+                    <svg className="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -2453,9 +3279,19 @@ export default function ExistingVendors() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="md:col-span-2">
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-              Search Vendors
-            </label>
+            <div className="flex items-center gap-1">
+              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+                Search Vendors & Actual Occupants
+              </label>
+              <div className="relative group">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="absolute z-10 left-0 -bottom-1 transform translate-y-full w-64 bg-black text-white text-xs rounded p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                  Searches across: vendor name, username, stall number, phone number, and all actual occupant details (name, username, phone).
+                </div>
+              </div>
+            </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2468,7 +3304,7 @@ export default function ExistingVendors() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Search by name, username, or stall..."
+                placeholder="Search by name, username, stall, or actual occupant details..."
               />
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                 <kbd className="inline-flex items-center rounded border border-gray-200 px-1 font-sans text-xs text-gray-400">
@@ -2486,8 +3322,12 @@ export default function ExistingVendors() {
             <select
               id="statusFilter"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setActiveCard(null); // Clear card selection when filter changes directly
+              }}
+              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm
+                ${activeCard === 'active' || activeCard === 'inactive' || activeCard === 'pending' ? 'border-indigo-300 bg-indigo-50' : 'border-gray-300'}`}
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -2504,7 +3344,10 @@ export default function ExistingVendors() {
             <select
               id="sectionFilter"
               value={sectionFilter}
-              onChange={(e) => setSectionFilter(e.target.value)}
+              onChange={(e) => {
+                setSectionFilter(e.target.value);
+                setActiveCard(null); // Clear card selection when section filter changes
+              }}
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             >
               <option value="all">All Sections</option>
@@ -2519,8 +3362,49 @@ export default function ExistingVendors() {
 
         {/* Active Filters & Clear */}
         <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
             <span>Filters active:</span>
+            
+            {/* Card filter indicators */}
+            {activeCard === 'total' && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20a3 3 0 01-3-3v-2a3 3 0 013-3 3 3 0 013 3v2a3 3 0 01-3 3zm8-10a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Total Vendors
+              </span>
+            )}
+            
+            {activeCard === 'active' && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <div className="h-2 w-2 rounded-full bg-green-500 mr-1"></div>
+                Active Vendors
+              </span>
+            )}
+            
+            {activeCard === 'inactive' && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                <div className="h-2 w-2 rounded-full bg-gray-500 mr-1"></div>
+                Inactive Vendors
+              </span>
+            )}
+            
+            {activeCard === 'withStalls' && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                With Stalls
+              </span>
+            )}
+            
+            {activeCard === 'pending' && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                <div className="h-2 w-2 rounded-full bg-yellow-500 mr-1"></div>
+                Pending Vendors
+              </span>
+            )}
+            
             {searchTerm && (
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 Search: "{searchTerm}"
@@ -2542,13 +3426,51 @@ export default function ExistingVendors() {
               </span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            Clear all filters
-          </button>
+          <div className="flex space-x-2">
+            <button
+              type="button"
+              onClick={clearFilters}
+              disabled={!searchTerm && statusFilter === 'all' && sectionFilter === 'all' && !activeCard}
+              className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 
+                ${searchTerm || statusFilter !== 'all' || sectionFilter !== 'all' || activeCard
+                  ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                  : 'text-gray-400 bg-gray-50 cursor-not-allowed'}`}
+            >
+              <svg className="mr-1.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear all filters
+            </button>
+            
+            {selectedVendors.size > 0 && (() => {
+              // Determine if any of the selected vendors are active
+              const hasActiveVendors = Array.from(selectedVendors).some(id => {
+                const vendor = vendors.find(v => v.id === id);
+                return vendor?.status?.toLowerCase() === 'active';
+              });
+              
+              return (
+                <button
+                  type="button"
+                  onClick={hasActiveVendors ? inactivateSelectedVendors : activateSelectedVendors}
+                  className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    hasActiveVendors 
+                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-500' 
+                    : 'bg-green-100 text-green-700 hover:bg-green-200 focus:ring-green-500'
+                  }`}
+                >
+                  <svg className="mr-1.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {hasActiveVendors ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    )}
+                  </svg>
+                  {hasActiveVendors ? 'Inactivate' : 'Activate'} {selectedVendors.size} Selected
+                </button>
+              );
+            })()}
+          </div>
         </div>
       </div>
 
@@ -2560,6 +3482,11 @@ export default function ExistingVendors() {
             <span className="font-medium">{filteredAndSortedVendors.length}</span> vendors
             {filteredAndSortedVendors.length !== vendors.length && (
               <span className="text-gray-500"> (filtered from {vendors.length})</span>
+            )}
+            {selectedVendors.size > 0 && (
+              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                {selectedVendors.size} selected
+              </span>
             )}
           </div>
         </div>
@@ -2632,6 +3559,24 @@ export default function ExistingVendors() {
                 <table className="min-w-full divide-y divide-gray-300 shadow-sm rounded-lg overflow-hidden">
                   <thead className="bg-gray-50">
                     <tr>
+                      <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0 w-8">
+                        <div className="flex items-center">
+                          <input
+                            id="select-all-vendors"
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            checked={allSelected}
+                            onChange={() => {}} // React requires onChange handler for controlled components
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSelectAll(e as unknown as React.ChangeEvent<HTMLInputElement>);
+                            }}
+                          />
+                          <label htmlFor="select-all-vendors" className="sr-only">
+                            Select All
+                          </label>
+                        </div>
+                      </th>
                       <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
                         <button
                           type="button"
@@ -2659,7 +3604,7 @@ export default function ExistingVendors() {
                         </button>
                       </th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                        Username
+                        Phone Number
                       </th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                         <button
@@ -2688,7 +3633,10 @@ export default function ExistingVendors() {
                         </button>
                       </th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                        Section & Status
+                        Section
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        Status
                       </th>
                       <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
                         <span className="sr-only">Actions</span>
@@ -2709,6 +3657,17 @@ export default function ExistingVendors() {
                           className="hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
                           onClick={() => handleVendorRowClick(vendor)}
                         >
+                          <td className="py-4 pl-4 pr-3 text-sm sm:pl-0 w-8">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                checked={selectedVendors.has(vendor.id)}
+                                onChange={() => {}} // React requires onChange handler for controlled components
+                                onClick={(e) => toggleVendorSelection(e, vendor.id)}
+                              />
+                            </div>
+                          </td>
                           <td className="py-4 pl-4 pr-3 text-sm sm:pl-0 w-64">
                             <div className="flex items-center">
                               <div className="h-10 w-10 flex-shrink-0 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -2720,52 +3679,60 @@ export default function ExistingVendors() {
                                 <div className="font-medium text-gray-900 truncate">
                                   {vendor.first_name} {vendor.middle_name && `${vendor.middle_name}.`} {vendor.last_name}
                                 </div>
-                                <div className="text-xs text-gray-500 font-mono">{vendor.username}</div>
+                                <div className="text-xs text-gray-500 font-mono">@{vendor.username}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-3 py-4 text-sm">
-                            <div className="text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded text-xs">
-                              {vendor.username}
-                            </div>
+                            {vendor.phone_number ? (
+                              <div className="text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded text-xs">
+                                +63 {vendor.phone_number.startsWith('9') ? vendor.phone_number : '9' + vendor.phone_number}
+                              </div>
+                            ) : (
+                              <div className="text-red-600 font-medium italic px-2 py-1 text-xs">
+                                None
+                              </div>
+                            )}
                           </td>
                           <td className="px-3 py-4 text-sm">
                             {stallNumber ? (
                               <div className="flex items-center">
-                                <div className="h-6 w-8 flex-shrink-0 rounded bg-blue-100 flex items-center justify-center mr-2">
+                                <div className="h-6 w-8 flex-shrink-0 rounded bg-blue-100 flex items-center justify-center">
                                   <span className="font-medium text-blue-700 text-xs">{stallNumber}</span>
                                 </div>
-                                <span className="text-gray-600 text-xs">{assignedStall?.location_desc || 'No description'}</span>
                               </div>
                             ) : (
                               <span className="text-gray-400 italic">No stall assigned</span>
                             )}
                           </td>
                           <td className="px-3 py-4 text-sm">
-                            <div className="space-y-1">
-                              <div className="text-gray-900 text-xs">
-                                {section?.name || 'No section'}
-                              </div>
-                              <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${vendor.status?.toLowerCase() === 'active'
-                                ? 'bg-green-100 text-green-800'
-                                : vendor.status?.toLowerCase() === 'pending'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
-                                }`}>
-                                <span className={`h-1.5 w-1.5 rounded-full ${vendor.status?.toLowerCase() === 'active'
-                                  ? 'bg-green-600'
-                                  : vendor.status?.toLowerCase() === 'pending'
-                                    ? 'bg-yellow-600'
-                                    : 'bg-red-600'
-                                  } mr-1.5`}></span>
-                                {vendor.status || 'Unknown'}
-                              </span>
+                            <div className="text-gray-900">
+                              {section?.name || 'No section'}
                             </div>
+                          </td>
+                          <td className="px-3 py-4 text-sm">
+                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${vendor.status?.toLowerCase() === 'active'
+                              ? 'bg-green-100 text-green-800'
+                              : vendor.status?.toLowerCase() === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                              }`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${vendor.status?.toLowerCase() === 'active'
+                                ? 'bg-green-600'
+                                : vendor.status?.toLowerCase() === 'pending'
+                                  ? 'bg-yellow-600'
+                                  : 'bg-red-600'
+                                } mr-1.5`}></span>
+                              {vendor.status || 'Unknown'}
+                            </span>
                           </td>
                           <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
                             <button
                               type="button"
-                              onClick={() => handleDeleteVendor(vendor)}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Stop event from bubbling up to the row
+                                handleDeleteVendor(vendor);
+                              }}
                               disabled={isDeleting}
                               className={`inline-flex items-center text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed ${isDeleting ? 'cursor-wait' : ''
                                 }`}
@@ -2910,6 +3877,7 @@ export default function ExistingVendors() {
         actualOccupantUsername={credentialsData.actualOccupantUsername}
         actualOccupantPassword={credentialsData.actualOccupantPassword}
         actualOccupantPhone={credentialsData.actualOccupantPhone}
+        phone_number={credentialsData.phone_number}
       />
 
       {/* Vendor Details Modal */}
@@ -2923,6 +3891,26 @@ export default function ExistingVendors() {
         onSave={handleVendorEdit}
         sections={sections}
         stalls={stalls}
+        setAlertModal={setAlertModal}
+      />
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal(prev => ({ ...prev, isOpen: false }))}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
       />
     </div>
   );

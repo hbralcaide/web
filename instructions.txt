@@ -1,0 +1,500 @@
+Tell me what to do from the start to end until the map successfully show up and working. Wait for me to say "done doing this" every step so i wont get bombarded and confuse because there are steps i need a follow up questions. take it easy on my im just human this is my first time doing this kind of project. i have no idea how to do this.
+
+Goal: 
+1. should be able to see the map both in PublicHome.tsx page and in IndoorMap.tsx(when an admin is logged in)
+2. should be able to see vacant stalls so that applicant can apply to it
+3. real-time
+
+My current progress are:
+Supabase table:
+1. admin_profiles - all admin and all info
+2. market_section - all sections in the public market ex. dried fish, grocery, fish, fruits and vegetables, meat, eatery, veriety, rice and grains
+3. product_categories - rice, grocery, beef, vegetables, grains, chicken, pork, dried fish, fish, fruits
+4. products - all products the admin inputted for the vendors to sell
+5. stalls - all stalls and their info
+6. vendor_products - all vendors who are selling in the public market and their products they sell
+7. vendor_profile - all vendors and their infos.
+8. vendor_applications - vendors who applied through the website
+9. spatial_ref_sys - not sure what exactly and how i got this.
+[
+  {
+    "section": "columns",
+    "name": "srid",
+    "detail": "integer",
+    "extra_info": "NO",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "auth_srid",
+    "detail": "integer",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "auth_name",
+    "detail": "character varying",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "srtext",
+    "detail": "character varying",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "proj4text",
+    "detail": "character varying",
+    "extra_info": "YES",
+    "more_info": null
+  }
+]
+
+10. geometry_columns - not sure what exactly and how i got this.
+[
+  {
+    "section": "columns",
+    "name": "coord_dimension",
+    "detail": "integer",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "srid",
+    "detail": "integer",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "type",
+    "detail": "character varying",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "f_table_catalog",
+    "detail": "character varying",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "f_geometry_column",
+    "detail": "name",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "f_table_schema",
+    "detail": "name",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "f_table_name",
+    "detail": "name",
+    "extra_info": "YES",
+    "more_info": null
+  }
+]
+
+11. geography_columns- not sure what exactly and how i got this.
+[
+  {
+    "section": "columns",
+    "name": "coord_dimension",
+    "detail": "integer",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "srid",
+    "detail": "integer",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "type",
+    "detail": "text",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "f_table_catalog",
+    "detail": "name",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "f_geography_column",
+    "detail": "name",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "f_table_schema",
+    "detail": "name",
+    "extra_info": "YES",
+    "more_info": null
+  },
+  {
+    "section": "columns",
+    "name": "f_table_name",
+    "detail": "name",
+    "extra_info": "YES",
+    "more_info": null
+  }
+]
+
+Supabase other:
+Edge Function:
+nearest_stalls
+// supabase/functions/nearest_stalls/index.ts
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Create a Supabase client using environment variables
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const supabase = createClient(supabaseUrl, supabaseKey);
+serve(async (req)=>{
+  try {
+    const { lat, lng, limit = 5 } = await req.json();
+    if (!lat || !lng) {
+      return new Response(JSON.stringify({
+        error: "lat and lng are required"
+      }), {
+        status: 400
+      });
+    }
+    const { data, error } = await supabase.rpc("get_nearest_stalls", {
+      user_lat: lat,
+      user_lng: lng,
+      max_results: limit
+    });
+    if (error) throw error;
+    return new Response(JSON.stringify({
+      stalls: data
+    }), {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({
+      error: error.message
+    }), {
+      status: 500
+    });
+  }
+});
+
+
+sync_mappedin_stalls
+// supabase/functions/sync_mappedin_stalls/index.ts
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// --- CONFIG ---
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const mappedinClientId = Deno.env.get("MAPPEDIN_CLIENT_ID");
+const mappedinClientSecret = Deno.env.get("MAPPEDIN_CLIENT_SECRET");
+// --- INIT SUPABASE CLIENT ---
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// --- HELPER: Get Mappedin Access Token ---
+async function getMappedinToken() {
+  const response = await fetch("https://account.mappedin.com/oauth/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      client_id: mappedinClientId,
+      client_secret: mappedinClientSecret,
+      audience: "https://api.mappedin.com",
+      grant_type: "client_credentials"
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`Mappedin auth failed: ${response.status}`);
+  }
+  const data = await response.json();
+  return data.access_token;
+}
+// --- MAIN FUNCTION ---
+Deno.serve(async (req)=>{
+  try {
+    const token = await getMappedinToken();
+    // Fetch all locations (stalls) from Mappedin
+    const res = await fetch("https://api.mappedin.com/locations", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error(`Mappedin API error: ${res.status}`);
+    }
+    const { data: locations } = await res.json();
+    const updated = [];
+    // Loop through stalls and update geom
+    for (const loc of locations){
+      const name = loc.name;
+      const lat = loc.anchor?.coordinates?.lat;
+      const lng = loc.anchor?.coordinates?.lon;
+      if (lat && lng && name) {
+        const { error } = await supabase.from("stalls").update({
+          geom: `SRID=4326;POINT(${lng} ${lat})`
+        }).eq("name", name);
+        if (error) {
+          console.error(`❌ Failed to update ${name}:`, error.message);
+        } else {
+          updated.push(name);
+        }
+      }
+    }
+    return new Response(JSON.stringify({
+      message: `✅ Synced ${updated.length} stalls`,
+      updated_stalls: updated
+    }), {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      status: 200
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response(JSON.stringify({
+      error: err.message
+    }), {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      status: 500
+    });
+  }
+});
+
+
+Website:
+import { BrowserRouter } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import AdminLayout from './layouts/AdminLayout';
+import Dashboard from './pages/Dashboard';
+import Vendors from './pages/Vendors';
+import Stalls from './pages/Stalls';
+import Profile from './pages/Profile';
+import Login from './pages/Login';
+import Signup from './pages/SignUp';
+import VendorConfirmed from './pages/VendorConfirmed';
+import MarketSections from './pages/MarketSections';
+import MarketLayout from './pages/MarketLayout';
+import Products from './pages/Products';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
+import IndoorMap from './pages/IndoorMap';
+import SectionStalls from './pages/SectionStalls';
+import PublicHome from './pages/PublicHome';
+import PublicHomeDebug from './pages/PublicHomeDebug';
+import VendorApplication from './pages/VendorApplication';
+import PersonalInfoForm from './pages/PersonalInfoForm';
+import PhotoPerson from './pages/PhotoPerson';
+import PhotoBarangay from './pages/PhotoBarangay';
+import PhotoId from './pages/PhotoId';
+import PhotoBirthCert from './pages/PhotoBirthCert';
+import PhotoMarriageCert from './pages/PhotoMarriageCert';
+import ApplicationForm from './pages/ApplicationForm';
+import ApplicationCompletion from './pages/ApplicationCompletion';
+import ApplicationPending from './pages/ApplicationPending';
+import ApplicationApproved from './pages/ApplicationApproved';
+import ApplicationRejected from './pages/ApplicationRejected';
+import ResumeApplication from './pages/ResumeApplication';
+import VendorCredentialSetup from './pages/VendorCredentialSetup';
+import VendorCredentialSuccess from './pages/VendorCredentialSuccess';
+import VendorStatus from './pages/VendorStatus';
+import RaffleWinnerDocuments from './pages/RaffleWinnerDocuments';
+import Raffle from './pages/Raffle';
+import './index.css';
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public landing page */}
+          <Route path="/" element={<PublicHome />} />
+
+          {/* Public debug page for stalls (dev only) */}
+          <Route path="/debug-stalls" element={<PublicHomeDebug />} />
+
+          {/* Authentication: login page */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Authentication: sign-up / vendor registration start */}
+          <Route path="/signup" element={<Signup />} />
+
+          {/* Confirmation page shown after vendor confirms email/registration */}
+          <Route path="/vendor-confirmed" element={<VendorConfirmed />} />
+
+          {/* Vendor Application Routes - multi-step application flow */}
+          {/* Application landing / overview */}
+          <Route path="/vendor-application" element={<VendorApplication />} />
+          {/* Step: personal information form */}
+          <Route path="/vendor-application/personal-info" element={<PersonalInfoForm />} />
+          {/* Step: upload portrait or personal photo */}
+          <Route path="/vendor-application/photo-person" element={<PhotoPerson />} />
+          {/* Step: upload barangay clearance photo */}
+          <Route path="/vendor-application/photo-barangay" element={<PhotoBarangay />} />
+          {/* Step: upload government ID */}
+          <Route path="/vendor-application/photo-id" element={<PhotoId />} />
+          {/* Step: upload birth certificate */}
+          <Route path="/vendor-application/photo-birth-cert" element={<PhotoBirthCert />} />
+          {/* Step: upload marriage certificate (if applicable) */}
+          <Route path="/vendor-application/photo-marriage-cert" element={<PhotoMarriageCert />} />
+          {/* Step: application form with details and declarations */}
+          <Route path="/vendor-application/application-form" element={<ApplicationForm />} />
+          {/* Final page: application completion summary */}
+          <Route path="/vendor-application/completion" element={<ApplicationCompletion />} />
+          {/* Application pending state (waiting for review) */}
+          <Route path="/vendor-application/pending" element={<ApplicationPending />} />
+          {/* Application approved notification */}
+          <Route path="/vendor-application/approved" element={<ApplicationApproved />} />
+          {/* Application rejected notification */}
+          <Route path="/vendor-application/rejected" element={<ApplicationRejected />} />
+          {/* Resume an in-progress application */}
+          <Route path="/resume-application" element={<ResumeApplication />} />
+
+          {/* Vendor credential setup: tokenized link to set password/credentials */}
+          <Route path="/vendor-setup/:token" element={<VendorCredentialSetup />} />
+          {/* Shown after successful vendor credential setup */}
+          <Route path="/vendor-credential-success" element={<VendorCredentialSuccess />} />
+
+          {/* Vendor status: view current application/profile status */}
+          <Route path="/vendor-status" element={<VendorStatus />} />
+
+          {/* Raffle winner documents upload / instructions page */}
+          <Route path="/raffle-winner-documents" element={<RaffleWinnerDocuments />} />
+
+          {/* Admin area - protected routes (requires auth + admin role) */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            {/* Admin dashboard (index) */}
+            <Route index element={<Dashboard />} />
+
+            {/* Admin: market management area (nested) */}
+            <Route path="market" element={<MarketLayout />}>
+              {/* Market map view (interactive indoor map) */}
+              <Route path="map" element={<IndoorMap />} />
+              {/* List / manage market sections */}
+              <Route path="sections" element={<MarketSections />} />
+              {/* View stalls within a specific section */}
+              <Route path="sections/:sectionId/stalls" element={<SectionStalls />} />
+              {/* Market-level stalls management */}
+              <Route path="stalls" element={<Stalls />} />
+            </Route>
+
+            {/* Generic stalls management page */}
+            <Route path="stalls" element={<Stalls />} />
+            {/* Vendors management and listing */}
+            <Route path="vendors" element={<Vendors />} />
+            {/* Admin raffle management */}
+            <Route path="raffle" element={<Raffle />} />
+            {/* Products management */}
+            <Route path="products" element={<Products />} />
+            {/* Admin user/profile settings */}
+            <Route path="profile" element={<Profile />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+export default App;
+
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtaWtfTTh1TVFjeEpaRFdSYndtclI1NDJlMDdhZiIsImF1ZCI6Imh0dHBzOi8vYXV0aC5tYXBwZWRpbi5jb20vIiwic2NvcGUiOlsicmVhZC11cGxvYWQiLCJyZWFkLXZlbnVlLWFwaSJdLCJndHkiOiJjbGllbnQtY3JlZGVudGlhbHMiLCJpYXQiOjE3NjE0ODU3MTcsImV4cCI6MTc2MTY1ODUxNywiaXNzIjoiaHR0cHM6Ly9hdXRoLW1ha2VyLm1hcHBlZGluLmNvbSJ9.1xtXIE5dY2g_TK13Yxx_JIKGic3a0x39F6cLQWttQWI","expires_in":172800}
+{"url":"https://cdn.mappedin.com/priv-68ee9141b47af0000bc138c1/af810aef84506cb74eb7b19f1b2f8349e676fc24.zip?sv=2025-07-05&st=2025-10-26T13%3A48%3A24Z&se=2025-10-28T13%3A48%3A34Z&sr=c&sp=r&sig=iwrrKgHRuZ4ingVyoiaqT6JypSp0UOevetMCjiVPU3g%3D","updated_at":"2025-10-26T09:31:58.838Z"}
+service key - eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc3NDI1OSwiZXhwIjoyMDY5MzUwMjU5fQ.SXor8-fBD9cg5H2VnywZYMxzQ5kJyeELxJ2Ydvs_n24
+
+curl -i -X POST "https://udxoepcssfhljwqbvhbd.functions.supabase.co/sync_mappedin_stalls" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NzQyNTksImV4cCI6MjA2OTM1MDI1OX0.CCpVQSyzuDs6sIEEZ42phS7ISKiM-rFfojv1YECpgM0" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+supabase secrets set SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc3NDI1OSwiZXhwIjoyMDY5MzUwMjU5fQ.SXor8-fBD9cg5H2VnywZYMxzQ5kJyeELxJ2Ydvs_n24"
+
+curl -X GET https://app.mappedin.com/api/v1/venues \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtaWtfTTh1TVFjeEpaRFdSYndtclI1NDJlMDdhZiIsImF1ZCI6Imh0dHBzOi8vYXV0aC5tYXBwZWRpbi5jb20vIiwic2NvcGUiOlsicmVhZC11cGxvYWQiLCJyZWFkLXZlbnVlLWFwaSJdLCJndHkiOiJjbGllbnQtY3JlZGVudGlhbHMiLCJpYXQiOjE3NjE0ODU3MTcsImV4cCI6MTc2MTY1ODUxNywiaXNzIjoiaHR0cHM6Ly9hdXRoLW1ha2VyLm1hcHBlZGluLmNvbSJ9.1xtXIE5dY2g_TK13Yxx_JIKGic3a0x39F6cLQWttQWI"
+
+supabase secrets set MAPPEDIN_CLIENT_ID="your_client_id" MAPPEDIN_CLIENT_SECRET="your_client_secret" --project-ref <your_project_ref>
+
+curl -i -X POST "https://udxoepcssfhljwqbvhbd.functions.supabase.co/mappedin_token" \
+  -H "Origin: http://localhost:3001" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc3NDI1OSwiZXhwIjoyMDY5MzUwMjU5fQ.SXor8-fBD9cg5H2VnywZYMxzQ5kJyeELxJ2Ydvs_n24" \
+  -d '{}'
+
+
+
+VITE_SUPABASE_URL=https://udxoepcssfhljwqbvhbd.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NzQyNTksImV4cCI6MjA2OTM1MDI1OX0.CCpVQSyzuDs6sIEEZ42phS7ISKiM-rFfojv1YECpgM0
+VITE_SUPABASE_FUNCTIONS_URL=https://udxoepcssfhljwqbvhbd.supabase.co/functions/v1/sync_mappedin_stalls
+VITE_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc3NDI1OSwiZXhwIjoyMDY5MzUwMjU5fQ.SXor8-fBD9cg5H2VnywZYMxzQ5kJyeELxJ2Ydvs_n24
+
+# MappedIn credentials
+VITE_MAPPEDIN_API_KEY=mik_M8uMQcxJZDWRbwmrR542e07af
+VITE_MAPPEDIN_MAP_ID=68ee9141b47af0000bc138c1
+VITE_MAPPEDIN_SECRET=mis_4sDELo8xqkrXxLMPEUXzDQsf71J3bvI1UhbUVcWm3WW8dfa102e
+
+
+
+curl -i -X POST "https://udxoepcssfhljwqbvhbd.functions.supabase.co/mappedin_token" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NzQyNTksImV4cCI6MjA2OTM1MDI1OX0.CCpVQSyzuDs6sIEEZ42phS7ISKiM-rFfojv1YECpgM0" \
+  -d '{}'
+
+curl -s -X POST "https://udxoepcssfhljwqbvhbd.functions.supabase.co/mappedin_token" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NzQyNTksImV4cCI6MjA2OTM1MDI1OX0.CCpVQSyzuDs6sIEEZ42phS7ISKiM-rFfojv1YECpgM0" \
+  -d '{"mapId":"68ee9141b47af0000bc138c1"}'
+
+curl -i -X POST "https://udxoepcssfhljwqbvhbd.functions.supabase.co/mappedin_token" \
+  -H "Origin: http://localhost:3001" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc3NDI1OSwiZXhwIjoyMDY5MzUwMjU5fQ.SXor8-fBD9cg5H2VnywZYMxzQ5kJyeELxJ2Ydvs_n24" \
+  -d '{}'
+
+curl -i -X POST "https://udxoepcssfhljwqbvhbd.functions.supabase.co/mappedin_mapdata" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NzQyNTksImV4cCI6MjA2OTM1MDI1OX0.CCpVQSyzuDs6sIEEZ42phS7ISKiM-rFfojv1YECpgM0" \
+  -d '{"mapId":"68ee9141b47af0000bc138c1"}'
+
+curl -i -X POST "https://udxoepcssfhljwqbvhbd.functions.supabase.co/mappedin_token" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NzQyNTksImV4cCI6MjA2OTM1MDI1OX0.CCpVQSyzuDs6sIEEZ42phS7ISKiM-rFfojv1YECpgM0" \
+  -d '{"mapId":"68ee9141b47af0000bc138c1"}'
+
+curl -i -X POST "https://udxoepcssfhljwqbvhbd.functions.supabase.co/mappedin_mapdata" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkeG9lcGNzc2ZobGp3cWJ2aGJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NzQyNTksImV4cCI6MjA2OTM1MDI1OX0.CCpVQSyzuDs6sIEEZ42phS7ISKiM-rFfojv1YECpgM0" \
+  -d '{"mapId":"68ee9141b47af0000bc138c1"}'
+
+
+supabase functions logs --project-ref udxoepcssfhljwqbvhbd --since 10m

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/supabase'
+import MappedinMap from "../components/MappedinMap"
 
 type MarketSection = Database['public']['Tables']['market_sections']['Row']
 type Stall = Database['public']['Tables']['stalls']['Row']
@@ -251,6 +252,26 @@ export default function PublicHome() {
                                     Email: <strong>admin@mapalengke.com</strong>
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Interactive Indoor Map */}
+                    <div className="bg-white border-2 border-gray-400 rounded-lg shadow-lg mb-8">
+                        <div className="bg-gray-800 text-white p-4 rounded-t-lg">
+                            <h3 className="text-xl font-bold text-center">TORIL PUBLIC MARKET MAP</h3>
+                            <p className="text-sm text-center text-gray-300">
+                                Explore the market and click available stalls to apply
+                            </p>
+                        </div>
+                        <div className="p-4">
+                            <MappedinMap 
+                                stalls={sections.flatMap(s => s.stalls)}
+                                onStallClick={(stall) => {
+                                    if (stall.status === 'vacant' || stall.status === 'available') {
+                                        window.location.href = `/vendor-application?stall=${stall.id}`;
+                                    }
+                                }}
+                            />
                         </div>
                     </div>
 

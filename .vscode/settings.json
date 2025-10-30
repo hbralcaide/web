@@ -1,0 +1,7 @@
+{
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": true,
+  // Only enable Deno for the functions folder to avoid interfering with frontend code:
+  "deno.enablePaths": ["supabase/functions"]
+}

@@ -37,15 +37,21 @@
    - **Install Command**: `npm install`
 
 6. **Add Environment Variables** in Vercel Dashboard:
+   
+   **Public Variables (VITE_ prefix - safe to expose):**
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_SUPABASE_FUNCTIONS_URL`
-   - `VITE_SUPABASE_SERVICE_ROLE_KEY`
    - `VITE_MAPPEDIN_SKIP_MAPDATA`
    - `VITE_MAPPEDIN_API_KEY`
    - `VITE_MAPPEDIN_MAP_ID`
-   - `VITE_MAPPEDIN_SECRET`
    - `VITE_MAPPEDIN_MVF_URL`
+   
+   **Private Variables (NO VITE_ prefix - server-only):**
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `MAPPEDIN_SECRET`
+   
+   ⚠️ See `SECURITY_GUIDE.md` for detailed security information!
 
 7. Click "Deploy"
 

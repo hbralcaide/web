@@ -8,7 +8,7 @@
 const MAPPEDIN_CLIENT_ID =
   Deno.env.get("MAPPEDIN_CLIENT_ID") ?? Deno.env.get("VITE_MAPPEDIN_API_KEY");
 const MAPPEDIN_CLIENT_SECRET =
-  Deno.env.get("MAPPEDIN_CLIENT_SECRET") ?? Deno.env.get("VITE_MAPPEDIN_SECRET");
+  Deno.env.get("MAPPEDIN_CLIENT_SECRET") ?? Deno.env.get("MAPPEDIN_SECRET");
 const MAPPEDIN_MAP_ID =
   Deno.env.get("MAPPEDIN_MAP_ID") ?? Deno.env.get("VITE_MAPPEDIN_MAP_ID");
 

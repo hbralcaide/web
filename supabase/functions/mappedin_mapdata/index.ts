@@ -3,13 +3,13 @@
 // Usage: POST { "mapId": "<map id>" } (mapId optional — will use env var fallback).
 // Requires these secrets in the function's environment:
 //   MAPPEDIN_CLIENT_ID  (or VITE_MAPPEDIN_API_KEY)
-//   MAPPEDIN_CLIENT_SECRET (or VITE_MAPPEDIN_SECRET)
+//   MAPPEDIN_CLIENT_SECRET (or MAPPEDIN_SECRET)
 //   MAPPEDIN_MAP_ID (or VITE_MAPPEDIN_MAP_ID)
 
 const MAPPEDIN_CLIENT_ID =
   Deno.env.get("MAPPEDIN_CLIENT_ID") ?? Deno.env.get("VITE_MAPPEDIN_API_KEY");
 const MAPPEDIN_CLIENT_SECRET =
-  Deno.env.get("MAPPEDIN_CLIENT_SECRET") ?? Deno.env.get("VITE_MAPPEDIN_SECRET");
+  Deno.env.get("MAPPEDIN_CLIENT_SECRET") ?? Deno.env.get("MAPPEDIN_SECRET");
 const DEFAULT_MAPPEDIN_MAP_ID =
   Deno.env.get("MAPPEDIN_MAP_ID") ?? Deno.env.get("VITE_MAPPEDIN_MAP_ID");
 

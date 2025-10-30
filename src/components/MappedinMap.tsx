@@ -31,7 +31,7 @@ export default function MappedinMap({
   onMapReady,
   className,
   clientKey = (import.meta.env.VITE_MAPPEDIN_API_KEY as string) ?? null,
-  clientSecret = (import.meta.env.VITE_MAPPEDIN_SECRET as string) ?? null,
+  clientSecret = null, // REMOVED: Secret should never be exposed to browser
   stalls,
   onStallClick,
 }: Props) {

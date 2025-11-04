@@ -43,10 +43,7 @@ export default function MappedinMap({
 
   const normalize = (s: any) =>
     String(s ?? "")
-      .normalize?.("NFKD")
-      .replace(/\p{Diacritic}/gu, "")
-      .replace(/\s+/g, "")
-      .replace(/[-_]+/g, "")
+      .trim()
       .toUpperCase();
 
   useEffect(() => {
@@ -266,28 +263,39 @@ export default function MappedinMap({
         const mod = await import("@mappedin/mappedin-js/lib/esm/index.js");
         console.log("MappedinMap: mappedin module loaded. keys:", Object.keys(mod));
         
-        // Try using getVenue() like React Native app (requires client key + secret)
-        if (clientKey && clientSecret && typeof (mod as any).getVenue === "function") {
+        // Try using getMapData() - CORRECT Web SDK v6 method (returns MapData with spaces)
+        if (clientKey && clientSecret && typeof (mod as any).getMapData === "function") {
           try {
-            console.log("🗺️ MappedinMap: Fetching venue using getVenue() (like React Native)...");
-            const venue = await (mod as any).getVenue({
-              venue: effectiveMapId,
-              clientId: clientKey,
-              clientSecret: clientSecret,
+            console.log("🗺️ MappedinMap: Fetching mapData using getMapData() (Web SDK v6 pattern)...");
+            const mapData = await (mod as any).getMapData({
+              key: clientKey,
+              secret: clientSecret,
+              mapId: effectiveMapId,
             });
             
-            if (venue) {
-              console.log("🗺️ MappedinMap: Successfully fetched venue data, initializing...");
-              const mapInstance = await mod.show3dMap(containerRef.current, venue);
+            if (mapData) {
+              console.log("🗺️ MappedinMap: Successfully fetched mapData, initializing...");
+              console.log("🗺️ MappedinMap: mapData has getByType?", typeof mapData.getByType === 'function');
+              
+              // Get spaces using mapData.getByType('space') - the CORRECT way
+              const spaces = mapData.getByType ? mapData.getByType('space') : [];
+              console.log("🗺️ MappedinMap: spaces count:", spaces.length);
+              if (spaces.length > 0) {
+                console.log("🗺️ MappedinMap: First 3 spaces:", spaces.slice(0, 3).map((s: any) => ({ name: s.name, id: s.id })));
+              }
+              
+              const mapInstance = await mod.show3dMap(containerRef.current, mapData);
               instanceRef.current = mapInstance;
               setMap(mapInstance);
-              try { (mapInstance as any).__mapData = venue; } catch {}
-              setMapDataState(venue);
+              try { 
+                (mapInstance as any).__mapData = mapData;
+              } catch {}
+              setMapDataState(mapData);
               if (onMapReady) onMapReady(mapInstance);
               return;
             }
-          } catch (venueErr) {
-            console.warn("🗺️ MappedinMap: getVenue() failed:", venueErr);
+          } catch (mapDataErr) {
+            console.warn("🗺️ MappedinMap: getMapData() failed:", mapDataErr);
           }
         }
         
@@ -550,162 +558,110 @@ export default function MappedinMap({
   useEffect(() => {
     if (!map || !stalls) return;
 
-    const stallMap = new Map(stalls.map((stall) => [normalize(stall.stall_number), stall]));
+    // Category colors matching React Native app
+    const sectionColors: { [key: string]: string } = {
+      'E-': '#FF6B6B',      // Eatery - Red
+      'FV-': '#4CAF50',     // Fruits & Vegetables - Green
+      'DF-': '#FF9800',     // Dried Fish - Orange
+      'G-': '#2196F3',      // Grocery - Blue
+      'RG-': '#FFC107',     // Rice & Grains - Amber
+      'V-': '#9C27B0',      // Variety - Purple
+      'F-': '#00BCD4',      // Fish - Cyan
+      'M-': '#F44336',      // Meat - Deep Red
+    };
 
-    const debugOnceKey = "__mappedin_debugged__";
+    const stallMap = new Map(stalls.map((stall) => [stall.stall_number, stall]));
+
     try {
       const m: any = map;
 
-      // Introspection and tolerant accessors across SDK variants
-      const protoKeys = (() => {
-        try { return Object.getOwnPropertyNames(Object.getPrototypeOf(m)); } catch { return []; }
-      })();
-      if (!m[debugOnceKey]) {
-        m[debugOnceKey] = true;
-        console.log("MappedinMap: map instance keys:", Object.keys(m));
-        console.log("MappedinMap: prototype keys:", protoKeys);
-        try { console.log("MappedinMap: Style keys:", Object.keys(m?.Style || {})); } catch {}
-        try { console.log("MappedinMap: Shapes keys:", Object.keys(m?.Shapes || {})); } catch {}
-        try {
-          const md = (m as any).__mapData ?? mapDataState;
-          if (md) {
-            const mdKeys = Object.keys(md);
-            console.log("MappedinMap: attached mapData keys:", mdKeys);
-            try {
-              const locs = (md as any).locations || (md as any).polygons || [];
-              console.log("MappedinMap: mapData locations length:", Array.isArray(locs) ? locs.length : typeof locs);
-              console.log("MappedinMap: sample mapData locations:", (Array.isArray(locs) ? locs.slice(0, 5) : []));
-            } catch {}
-          }
-        } catch {}
+      // Get mapData - MUST use mapData.getByType('space') for Web SDK v6
+      const mapData = (m as any).__mapData ?? mapDataState;
+      
+      if (!mapData || typeof mapData.getByType !== 'function') {
+        console.warn("MappedinMap: mapData not available or missing getByType method");
+        return;
       }
-
-      // Candidate ways to list polygons/locations depending on SDK build
-      const tryGetLocations = () => {
-        try {
-          if (m?.locations?.list) return m.locations.list();
-        } catch {}
-        try {
-          if (typeof m?.getLocations === "function") return m.getLocations();
-        } catch {}
-        try {
-          if (m?.polygons?.list) return m.polygons.list();
-        } catch {}
-        try {
-          if (typeof m?.getPolygons === "function") return m.getPolygons();
-        } catch {}
-        try {
-          // sometimes nested under mapView or scene
-          if (m?.mapView?.locations?.list) return m.mapView.locations.list();
-        } catch {}
-        try {
-          if (m?.mapView?.getLocations) return m.mapView.getLocations();
-        } catch {}
-        return [] as any[];
-      };
-
-      const locations: any[] = tryGetLocations() || [];
-      console.log("MappedinMap: locations count:", Array.isArray(locations) ? locations.length : typeof locations);
-      try {
-        const sample = (Array.isArray(locations) ? locations : []).slice(0, 10).map((p: any) => ({
-          name: p?.name,
-          id: p?.id,
-          slug: p?.slug,
-          externalId: p?.externalId,
-          keys: Object.keys(p || {}),
-        }));
-        console.log("MappedinMap: sample locations (first 10):", sample);
-      } catch {}
-      if (!Array.isArray(locations) || locations.length === 0) {
-        console.warn("MappedinMap: no locations array found on this SDK build yet; overlays cannot be applied.");
-        // Attach raw click logger to inspect event payloads
-        const rawClick = (evt: any) => {
-          try {
-            const ek = evt ? Object.keys(evt) : [];
-            console.log("MappedinMap: raw click event keys:", ek, "evt:", evt);
-          } catch {}
-        };
-        try { m.on?.("click", rawClick); } catch {}
-        // Also expose a shallow tree walker to find arrays with name fields
-        try {
-          (window as any).dumpMappedinTree = () => {
-            const visited = new Set<any>();
-            const results: any[] = [];
-            const maxDepth = 3;
-            const walk = (obj: any, path: string, depth: number) => {
-              if (!obj || typeof obj !== "object") return;
-              if (visited.has(obj) || depth > maxDepth) return;
-              visited.add(obj);
-              try {
-                if (Array.isArray(obj) && obj.length && typeof obj[0] === "object") {
-                  const n = obj.slice(0, 3).some((it) => !!(it && (it.name || it.id || it.slug || it.externalId)));
-                  if (n) {
-                    results.push({ path, length: obj.length, sample: obj.slice(0, 3).map((it) => ({ name: it.name, id: it.id, slug: it.slug, externalId: it.externalId, keys: Object.keys(it || {}) })) });
-                  }
-                }
-              } catch {}
-              const keys = Object.keys(obj);
-              for (const k of keys) {
-                const v: any = (obj as any)[k];
-                if (!v || typeof v !== "object") continue;
-                if (v === obj) continue;
-                walk(v, path ? `${path}.${k}` : k, depth + 1);
-              }
-            };
-            walk(m, "map", 0);
-            try { console.log("dumpMappedinTree: found arrays:", results); } catch {}
-            return results;
-          };
-          console.log("MappedinMap: dumpMappedinTree() is available on window for deeper inspection.");
-        } catch {}
+      
+      // Web SDK v6: Use mapData.getByType('space') to get all spaces
+      const spaces = mapData.getByType('space');
+      
+      console.log("MappedinMap: spaces count:", spaces.length);
+      if (spaces.length > 0) {
+        console.log("MappedinMap: first 3 spaces:", spaces.slice(0, 3).map((s: any) => ({ name: s.name, id: s.id })));
+      }
+      
+      if (spaces.length === 0) {
+        console.warn("MappedinMap: no spaces found in mapData");
         return;
       }
 
-      const colorPolygon = (poly: any, color: string) => {
-        try {
-          if (typeof m.setPolygonColor === "function") return m.setPolygonColor(poly, color);
-        } catch {}
-        try {
-          if (typeof m.setLocationColor === "function") return m.setLocationColor(poly, color);
-        } catch {}
-        try {
-          if (typeof poly?.setColor === "function") return poly.setColor(color);
-        } catch {}
-      };
-
-      const addInteractive = (poly: any) => {
-        try {
-          if (typeof m.addInteractivePolygon === "function") return m.addInteractivePolygon(poly);
-        } catch {}
-        try {
-          if (typeof m.addInteractiveLocation === "function") return m.addInteractiveLocation(poly);
-        } catch {}
-      };
-
+      // Color and make stalls interactive
       let matched = 0;
       let unmatched = 0;
-      locations.forEach((polygon: any) => {
-        const key = normalize(polygon?.name ?? polygon?.id ?? polygon?.slug ?? polygon?.externalId);
-        const stall = stallMap.get(key);
+      
+      spaces.forEach((space: any) => {
+        const stallNumber = space?.name; // Match by space.name === stall_number
+        const stall = stallMap.get(stallNumber);
+        
         if (stall) {
-          const isAvailable = stall.status === "vacant" || stall.status === "available";
-          const color = isAvailable ? "#4ade80" : "#f87171";
-          colorPolygon(polygon, color);
-          if (isAvailable && onStallClick) addInteractive(polygon);
-          matched++;
+          // Extract prefix (e.g., "M-40" -> "M-")
+          const prefix = stallNumber.match(/^[A-Z]+-/)?.[0] || '';
+          const color = sectionColors[prefix] || '#9E9E9E'; // Default gray
+          
+          console.log(`Coloring stall ${stallNumber} with color ${color} (prefix: ${prefix})`);
+          
+          // Color the space using Web SDK updateState() method
+          try {
+            m.updateState(space, {
+              color: color,
+              hoverColor: color,
+              interactive: !!onStallClick, // Make interactive if click handler provided
+            });
+            
+            matched++;
+          } catch (err) {
+            console.warn("Failed to color space:", space?.name, err);
+          }
         } else {
-          colorPolygon(polygon, "#e5e7eb");
-          unmatched++;
+          // Unmatched spaces - light gray
+          try {
+            m.updateState(space, {
+              color: '#e5e7eb',
+              hoverColor: '#e5e7eb',
+              interactive: false,
+            });
+            unmatched++;
+          } catch {}
         }
       });
+      
       console.log(`MappedinMap: overlay coloring done. matched=${matched} unmatched=${unmatched}`);
 
-      // Generic click hookup
-      const handleClick = (polygon: any) => {
+      // Click handler
+      const handleClick = (event: any) => {
         if (!onStallClick) return;
-        const key = normalize(polygon?.name ?? polygon?.id ?? polygon?.slug ?? polygon?.externalId);
-        const stall = stallMap.get(key);
-        if (stall) onStallClick(stall, polygon);
+        
+        console.log("Map clicked, event:", event);
+        
+        // Web SDK click event has spaces array
+        const space = event?.spaces?.[0] || event?.space || event;
+        const stallNumber = space?.name;
+        const stall = stallMap.get(stallNumber);
+        
+        if (stall) {
+          console.log("Clicked stall:", stallNumber);
+          
+          // Highlight selected stall with purple-blue (matching React Native)
+          try {
+            m.updateState(space, {
+              color: '#667eea',
+              hoverColor: '#764ba2',
+            });
+          } catch {}
+          
+          onStallClick(stall, space);
+        }
       };
 
       let off: (() => void) | undefined;
@@ -714,22 +670,6 @@ export default function MappedinMap({
           m.on("click", handleClick);
           off = () => { try { m.off?.("click", handleClick); } catch {} };
         }
-      } catch {}
-
-      // Expose a small debug helper to list all location names in console
-      try {
-        (window as any).dumpMappedinLocations = () => {
-          try {
-            const arr = tryGetLocations() || [];
-            console.log("dumpMappedinLocations count=", arr?.length || 0);
-            (arr || []).forEach((p: any, i: number) => {
-              const key = normalize(p?.name ?? p?.id ?? p?.slug ?? p?.externalId);
-              console.log(i, p?.name, { id: p?.id, slug: p?.slug, externalId: p?.externalId, key });
-            });
-          } catch (e) {
-            console.warn("dumpMappedinLocations failed:", e);
-          }
-        };
       } catch {}
 
       return () => { try { off?.(); } catch {} };

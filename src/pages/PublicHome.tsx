@@ -263,9 +263,31 @@ export default function PublicHome() {
                                 Explore the market and click available stalls to apply
                             </p>
                         </div>
+                        
+                        {/* Map Legend */}
+                        <div className="bg-green-50 border-b-2 border-green-200 p-4">
+                            <div className="max-w-3xl mx-auto">
+                                <h4 className="text-center font-bold text-green-900 mb-3">MAP LEGEND</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex items-center justify-center gap-3 bg-white p-3 rounded-lg border border-green-300">
+                                        <div className="w-8 h-8 rounded" style={{backgroundColor: '#10B981'}}></div>
+                                        <span className="font-semibold text-green-900">AVAILABLE - Click to Apply</span>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-3 bg-white p-3 rounded-lg border border-gray-300">
+                                        <div className="w-8 h-8 rounded bg-gray-400"></div>
+                                        <span className="font-semibold text-gray-700">OCCUPIED - Not Available</span>
+                                    </div>
+                                </div>
+                                <p className="text-center text-sm text-green-800 mt-3 font-medium">
+                                    🖱️ Click any <span className="text-green-600 font-bold">GREEN stall</span> on the map to start your application
+                                </p>
+                            </div>
+                        </div>
+                        
                         <div className="p-4">
                             <MappedinMap 
                                 stalls={sections.flatMap(s => s.stalls)}
+                                colorMode="simple"
                                 onStallClick={(stall) => {
                                     if (stall.status === 'vacant' || stall.status === 'available') {
                                         window.location.href = `/vendor-application?stall=${stall.id}`;

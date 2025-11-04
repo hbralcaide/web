@@ -15,6 +15,7 @@ interface Props {
   clientSecret?: string | null;
   stalls?: Stall[];
   onStallClick?: (stall: Stall, polygon: any) => void;
+  colorMode?: 'simple' | 'category'; // 'simple' = green/grey only, 'category' = category colors
 }
 
 function base64ToUint8Array(base64: string) {
@@ -34,6 +35,7 @@ export default function MappedinMap({
   clientSecret = (import.meta.env.VITE_MAPPEDIN_CLIENT_SECRET as string) ?? null, // TEMPORARY: Exposed for getVenue()
   stalls,
   onStallClick,
+  colorMode = 'category', // Default to category colors for backward compatibility
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<any>(null);
@@ -558,7 +560,7 @@ export default function MappedinMap({
   useEffect(() => {
     if (!map || !stalls) return;
 
-    // Category colors matching React Native app
+    // Category colors for 'category' mode (IndoorMap.tsx)
     const sectionColors: { [key: string]: string } = {
       'E-': '#FF6B6B',      // Eatery - Red
       'FV-': '#4CAF50',     // Fruits & Vegetables - Green
@@ -596,53 +598,130 @@ export default function MappedinMap({
         return;
       }
 
-      // Color and make stalls interactive
-      let matched = 0;
-      let unmatched = 0;
+      // Color and make stalls interactive based on vacancy status
+      let vacantCount = 0;
+      let occupiedCount = 0;
+      let unmatchedCount = 0;
       
       spaces.forEach((space: any) => {
         const stallNumber = space?.name; // Match by space.name === stall_number
         const stall = stallMap.get(stallNumber);
         
         if (stall) {
-          // Extract prefix (e.g., "M-40" -> "M-")
-          const prefix = stallNumber.match(/^[A-Z]+-/)?.[0] || '';
-          const color = sectionColors[prefix] || '#9E9E9E'; // Default gray
+          // Check if stall is vacant/available
+          const isVacant = stall.status === 'vacant' || stall.status === 'available';
           
-          console.log(`Coloring stall ${stallNumber} with color ${color} (prefix: ${prefix})`);
+          let color: string;
+          let hoverColor: string;
+          let interactive: boolean;
           
-          // Color the space using Web SDK updateState() method
+          if (colorMode === 'simple') {
+            // SIMPLE MODE (PublicHome.tsx): GREEN for vacant, GREY for occupied
+            if (isVacant) {
+              color = '#10B981'; // Emerald green
+              hoverColor = '#059669'; // Darker green on hover
+              interactive = !!onStallClick;
+              vacantCount++;
+              console.log(`✅ VACANT stall ${stallNumber} - GREEN & CLICKABLE`);
+            } else {
+              color = '#9CA3AF'; // Grey for occupied
+              hoverColor = '#9CA3AF';
+              interactive = false;
+              occupiedCount++;
+              console.log(`🔒 OCCUPIED stall ${stallNumber} - GREY (not clickable)`);
+            }
+          } else {
+            // CATEGORY MODE (IndoorMap.tsx): Show category colors
+            if (isVacant) {
+              // Vacant stalls still shown in green for visibility
+              color = '#10B981';
+              hoverColor = '#059669';
+              interactive = !!onStallClick;
+              vacantCount++;
+              console.log(`✅ VACANT stall ${stallNumber} - GREEN & CLICKABLE`);
+            } else {
+              // Occupied stalls show their category color
+              const prefix = stallNumber.match(/^[A-Z]+-/)?.[0] || '';
+              color = sectionColors[prefix] || '#9E9E9E';
+              hoverColor = color;
+              interactive = false;
+              occupiedCount++;
+              console.log(`🔒 OCCUPIED stall ${stallNumber} - ${color} (${prefix})`);
+            }
+          }
+          
+          // Apply color and interactivity
           try {
             m.updateState(space, {
               color: color,
-              hoverColor: color,
-              interactive: !!onStallClick, // Make interactive if click handler provided
+              hoverColor: hoverColor,
+              interactive: interactive,
             });
-            
-            matched++;
           } catch (err) {
             console.warn("Failed to color space:", space?.name, err);
           }
         } else {
-          // Unmatched spaces - light gray
+          // Unmatched spaces (no stall data) - light gray, not interactive
           try {
             m.updateState(space, {
               color: '#e5e7eb',
               hoverColor: '#e5e7eb',
               interactive: false,
             });
-            unmatched++;
+            unmatchedCount++;
           } catch {}
         }
       });
       
-      console.log(`MappedinMap: overlay coloring done. matched=${matched} unmatched=${unmatched}`);
+      console.log(`MappedinMap: Coloring complete! (mode: ${colorMode})`);
+      console.log(`  ✅ ${vacantCount} VACANT stalls (green, clickable)`);
+      console.log(`  🔒 ${occupiedCount} OCCUPIED stalls (${colorMode === 'simple' ? 'grey' : 'category colors'}, not clickable)`);
+      console.log(`  ⚪ ${unmatchedCount} unmatched spaces (gray)`);
 
-      // Click handler
+      // Hover handler - Show tooltip for vacant stalls
+      const handleHover = (event: any) => {
+        const space = event?.spaces?.[0];
+        if (!space) return;
+        
+        const stallNumber = space?.name;
+        const stall = stallMap.get(stallNumber);
+        
+        if (stall && (stall.status === 'vacant' || stall.status === 'available')) {
+          // Show tooltip for vacant stalls
+          const tooltip = `
+            <div style="padding: 12px; min-width: 200px;">
+              <div style="font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #10B981;">
+                ${stall.stall_number}
+              </div>
+              <div style="font-size: 14px; margin-bottom: 4px;">
+                <strong>Status:</strong> <span style="color: #10B981; font-weight: 600;">AVAILABLE</span>
+              </div>
+              ${stall.location_desc ? `<div style="font-size: 14px; margin-bottom: 4px;"><strong>Location:</strong> ${stall.location_desc}</div>` : ''}
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #059669;">
+                🖱️ Click to apply for this stall
+              </div>
+            </div>
+          `;
+          
+          try {
+            m.Tooltip?.show(space, tooltip);
+          } catch (err) {
+            console.warn("Failed to show tooltip:", err);
+          }
+        }
+      };
+      
+      const handleHoverOff = () => {
+        try {
+          m.Tooltip?.hide();
+        } catch {}
+      };
+
+      // Click handler - ONLY triggers for vacant/available stalls (interactive=true)
       const handleClick = (event: any) => {
         if (!onStallClick) return;
         
-        console.log("Map clicked, event:", event);
+        console.log("🖱️ Map clicked, event:", event);
         
         // Web SDK click event has spaces array
         const space = event?.spaces?.[0] || event?.space || event;
@@ -650,33 +729,58 @@ export default function MappedinMap({
         const stall = stallMap.get(stallNumber);
         
         if (stall) {
-          console.log("Clicked stall:", stallNumber);
+          // Double-check: Only allow clicks on vacant/available stalls
+          const isVacant = stall.status === 'vacant' || stall.status === 'available';
           
-          // Highlight selected stall with purple-blue (matching React Native)
-          try {
-            m.updateState(space, {
-              color: '#667eea',
-              hoverColor: '#764ba2',
-            });
-          } catch {}
-          
-          onStallClick(stall, space);
+          if (isVacant) {
+            console.log(`✅ Clicked VACANT stall: ${stallNumber} - Status: ${stall.status}`);
+            
+            // Highlight selected stall with purple-blue (matching React Native)
+            try {
+              m.updateState(space, {
+                color: '#667eea',
+                hoverColor: '#764ba2',
+              });
+            } catch {}
+            
+            onStallClick(stall, space);
+          } else {
+            console.log(`🔒 Clicked OCCUPIED stall: ${stallNumber} - Status: ${stall.status} (no action)`);
+            // Don't trigger callback for occupied stalls
+          }
         }
       };
 
       let off: (() => void) | undefined;
+      let offHover: (() => void) | undefined;
+      let offHoverOff: (() => void) | undefined;
+      
       try {
         if (typeof m.on === "function") {
+          // Register click event
           m.on("click", handleClick);
           off = () => { try { m.off?.("click", handleClick); } catch {} };
+          
+          // Register hover events
+          m.on("mouseover", handleHover);
+          offHover = () => { try { m.off?.("mouseover", handleHover); } catch {} };
+          
+          m.on("mouseout", handleHoverOff);
+          offHoverOff = () => { try { m.off?.("mouseout", handleHoverOff); } catch {} };
         }
       } catch {}
 
-      return () => { try { off?.(); } catch {} };
+      return () => { 
+        try { 
+          off?.(); 
+          offHover?.();
+          offHoverOff?.();
+        } catch {} 
+      };
     } catch (err) {
       console.warn("MappedinMap: error applying stall overlays:", err);
     }
-  }, [map, stalls, onStallClick, mapDataState]);
+  }, [map, stalls, onStallClick, mapDataState, colorMode]);
 
   return (
     <div style={{ position: "relative", width: "100%", minHeight: 600 }}>

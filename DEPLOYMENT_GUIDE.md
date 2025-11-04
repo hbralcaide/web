@@ -5,11 +5,13 @@
 ### Method 1: Using Vercel CLI
 
 1. **Install Vercel CLI**
+
    ```bash
    npm install -g vercel
    ```
 
 2. **Login to Vercel**
+
    ```bash
    vercel login
    ```
@@ -18,7 +20,6 @@
    ```bash
    vercel
    ```
-   
 4. **Deploy to Production**
    ```bash
    vercel --prod
@@ -31,14 +32,16 @@
 3. Click "Add New Project"
 4. Import your `hbralcaide/web` repository
 5. Configure:
+
    - **Framework Preset**: Vite
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
    - **Install Command**: `npm install`
 
 6. **Add Environment Variables** in Vercel Dashboard:
-   
-   **Public Variables (VITE_ prefix - safe to expose):**
+
+   **Public Variables (VITE\_ prefix - safe to expose):**
+
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_SUPABASE_FUNCTIONS_URL`
@@ -46,11 +49,12 @@
    - `VITE_MAPPEDIN_API_KEY`
    - `VITE_MAPPEDIN_MAP_ID`
    - `VITE_MAPPEDIN_MVF_URL`
-   
-   **Private Variables (NO VITE_ prefix - server-only):**
+
+   **Private Variables (NO VITE\_ prefix - server-only):**
+
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `MAPPEDIN_SECRET`
-   
+
    ⚠️ See `SECURITY_GUIDE.md` for detailed security information!
 
 7. Click "Deploy"
@@ -87,6 +91,7 @@ After deployment, update these files with your actual domain:
 ### Step 4: Get Indexed Faster
 
 After submitting to search consoles:
+
 - Request indexing for your main pages manually
 - Share your website on social media
 - Get backlinks from other websites
@@ -107,18 +112,22 @@ After submitting to search consoles:
 ## 🎯 Additional SEO Tips
 
 1. **Custom Domain** (Optional but Recommended)
+
    - Buy a domain (e.g., mapalengke.com from Namecheap/GoDaddy)
    - Add it to Vercel in Project Settings > Domains
    - Update all URLs in robots.txt, sitemap.xml, and meta tags
 
 2. **SSL Certificate**
+
    - Vercel automatically provides HTTPS (already done!)
 
 3. **Performance**
+
    - Your Vite build is already optimized
    - Consider adding lazy loading for images
 
 4. **Content**
+
    - Add more text content to your pages
    - Use proper heading tags (h1, h2, h3)
    - Add alt text to images
@@ -128,12 +137,17 @@ After submitting to search consoles:
    - Add to `index.html`:
      ```html
      <!-- Google Analytics -->
-     <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+     <script
+       async
+       src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"
+     ></script>
      <script>
        window.dataLayer = window.dataLayer || [];
-       function gtag(){dataLayer.push(arguments);}
-       gtag('js', new Date());
-       gtag('config', 'GA_MEASUREMENT_ID');
+       function gtag() {
+         dataLayer.push(arguments);
+       }
+       gtag("js", new Date());
+       gtag("config", "GA_MEASUREMENT_ID");
      </script>
      ```
 
@@ -151,12 +165,14 @@ After submitting to search consoles:
 ## 🔧 Troubleshooting
 
 **Site not appearing in Google?**
+
 - Check Google Search Console for errors
 - Verify robots.txt isn't blocking Google
 - Make sure site is actually deployed and accessible
 - Wait at least 1-2 weeks after submission
 
 **Want to speed up indexing?**
+
 - Create quality content
 - Get mentioned on other websites
 - Share on social media

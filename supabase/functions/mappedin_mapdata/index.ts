@@ -155,20 +155,84 @@ Deno.serve(async (req: Request) => {
 
     console.log("Obtained mappedin token (first 60 chars):", token.slice(0, 60));
 
-    // 2) Try to fetch map JSON from several likely endpoints (order matters)
+    // 2) Fetch venue data using the same pattern as React Native SDK
+    // The React Native SDK typically uses: GET /api/v1/venue/:slug
+    // Or: POST /api/v1/venue/get with venueId
+    const venueEndpoints = [
+      // Try venue API (used by React Native SDK)
+      `https://api.mappedin.com/api/v1/venue/${mapId}`,
+      `https://api.mappedin.com/1/venue/${mapId}`,
+      // Modern v2 API
+      `https://api.mappedin.com/v2/maps/${mapId}`,
+      `https://api.mappedin.com/v2/venues/${mapId}`,
+      // Try with perspective parameter (common for web SDK)
+      `https://api.mappedin.com/1/map/${mapId}?perspective=Website`,
+      `https://api.mappedin.com/1/venue/${mapId}?perspective=Website`,
+    ];
+
+    let venueData: any = null;
+    let lastError = "";
+
+    for (const url of venueEndpoints) {
+      try {
+        console.log("Trying venue endpoint:", url);
+        const r = await fetchWithRetry(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }, 2, 500);
+
+        if (r.ok) {
+          const data = await r.json();
+          console.log("✅ Got venue data from:", url);
+          venueData = data;
+          break;
+        } else {
+          const text = await r.text().catch(() => "");
+          console.warn(`❌ ${url} returned ${r.status}:`, text.slice(0, 200));
+          lastError = text;
+        }
+      } catch (err) {
+        console.warn(`❌ Error fetching ${url}:`, err);
+      }
+    }
+
+    if (venueData) {
+      // Return the venue data as mapData
+      return new Response(JSON.stringify({
+        mapData: venueData,
+        tokenUsed: token.slice(0, 60),
+        source: "venue-api"
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": allowOrigin,
+          "Access-Control-Allow-Credentials": allowCredentials
+        }
+      });
+    }
+
+    // 3) Fallback: Try to fetch map JSON from MVF endpoints
     // Note: Mappedin's public API shape can vary by account; we attempt multiple possible endpoints.
     const candidateEndpoints = [
+      // Modern API v2 endpoints (try these first)
+      `https://api.mappedin.com/v2/maps/${mapId}`,
+      `https://api.mappedin.com/v2/venues/${mapId}`,
       // Modern API candidates
       `https://api.mappedin.com/venues/${mapId}/mvf`,
       `https://api.mappedin.com/venue/${mapId}/mvf`,
       `https://api.mappedin.com/venues/${mapId}/map`,
       `https://api.mappedin.com/maps/${mapId}/mvf`,
+      `https://api.mappedin.com/maps/${mapId}`,
       // Legacy API candidates
       `https://app.mappedin.com/api/v1/maps/${mapId}/mvf`,
       `https://app.mappedin.com/api/v1/maps/${mapId}/mvf/download`,
       `https://app.mappedin.com/api/v1/maps/${mapId}/map`,
       `https://app.mappedin.com/api/v1/maps/${mapId}/mapdata`,
-      `https://app.mappedin.com/api/v1/maps/${mapId}`,
+      `https://app.mappedin.com/api/v1/maps/${mapId}`
     ];
 
     // Also include the token-bearing query param form as fallback used by some APIs

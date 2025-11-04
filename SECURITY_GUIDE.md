@@ -5,12 +5,14 @@
 Your sensitive secrets are now **properly protected**! Here's what changed:
 
 ### Before (❌ INSECURE):
+
 ```env
 VITE_SUPABASE_SERVICE_ROLE_KEY=... ← Exposed to browser!
 VITE_MAPPEDIN_SECRET=... ← Exposed to browser!
 ```
 
 ### After (✅ SECURE):
+
 ```env
 # Server-only (NOT exposed to browser)
 SUPABASE_SERVICE_ROLE_KEY=... ← Safe! Only in Supabase Functions
@@ -24,6 +26,7 @@ MAPPEDIN_SECRET=... ← Safe! Only in Supabase Functions
 Add these to **Vercel Dashboard → Settings → Environment Variables**:
 
 ### **PUBLIC Variables (Safe to Expose)**
+
 Select: **Production, Preview, Development**
 
 ```
@@ -36,7 +39,8 @@ VITE_MAPPEDIN_MAP_ID = 68ee9141b47af0000bc138c1
 VITE_MAPPEDIN_MVF_URL = /mappedin/market.mvf.zip
 ```
 
-### **PRIVATE Variables (Server-Only - No VITE_ prefix!)**
+### **PRIVATE Variables (Server-Only - No VITE\_ prefix!)**
+
 Select: **Production, Preview, Development**
 
 ```
@@ -63,14 +67,17 @@ supabase secrets set SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX
 ## 🎯 How It Works Now
 
 ### Client-Side (Browser)
+
 ✅ Can access: `VITE_*` variables only
 ❌ Cannot access: `SUPABASE_SERVICE_ROLE_KEY`, `MAPPEDIN_SECRET`
 
 ### Server-Side (Supabase Edge Functions)
+
 ✅ Can access: All variables (both `VITE_*` and non-VITE)
 ✅ Secrets stay on the server, never exposed to browser
 
 ### Example Flow:
+
 1. **Browser** uses `VITE_MAPPEDIN_API_KEY` (public, safe)
 2. **Browser** calls Supabase Edge Function for secure operations
 3. **Edge Function** uses `MAPPEDIN_SECRET` (private, server-only)
@@ -81,12 +88,14 @@ supabase secrets set SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX
 ## 🚨 Security Best Practices
 
 ### ✅ DO:
+
 - Use `VITE_` prefix for **public** values (URLs, public API keys, IDs)
 - Use **no prefix** for **sensitive** values (service keys, secrets, passwords)
 - Store secrets in Vercel Environment Variables Dashboard
 - Never commit `.env` file to Git (already in `.gitignore`)
 
 ### ❌ DON'T:
+
 - Use `VITE_` prefix for service role keys or secrets
 - Hardcode sensitive values in your code
 - Share your `.env` file publicly
@@ -109,17 +118,20 @@ After adding variables to Vercel:
 
 ## 🆘 Troubleshooting
 
-**Warning about VITE_ exposing keys?**
+**Warning about VITE\_ exposing keys?**
+
 - This is **expected** for public variables
 - It's **safe** for: URL, ANON_KEY, API_KEY, MAP_ID
 - Just click through the warning
 
 **Website not working after deployment?**
+
 - Check Vercel logs for missing environment variables
 - Make sure all variables are added
 - Verify you clicked "Redeploy" after adding variables
 
 **Edge Functions failing?**
+
 - Set Supabase secrets using `supabase secrets set`
 - Check function logs in Supabase Dashboard
 

@@ -1,5 +1,5 @@
 // src/components/MappedinMap.tsx
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getMappedinTokenFromServer, fetchMappedinMapData } from "../utils/mappedinHelpers";
 import type { Database } from "../types/supabase";
 
@@ -31,7 +31,7 @@ export default function MappedinMap({
   onMapReady,
   className,
   clientKey = (import.meta.env.VITE_MAPPEDIN_API_KEY as string) ?? null,
-  clientSecret = null, // REMOVED: Secret should never be exposed to browser
+  clientSecret = (import.meta.env.VITE_MAPPEDIN_CLIENT_SECRET as string) ?? null, // TEMPORARY: Exposed for getVenue()
   stalls,
   onStallClick,
 }: Props) {
@@ -105,6 +105,77 @@ export default function MappedinMap({
             const isZipByMagic = bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
             const isZipByCT = /zip|octet-stream/i.test(contentType);
             const isJsonCT = /json|text\/(plain|json)/i.test(contentType);
+
+            // NEW: Check if this is MVF v3 format by trying to detect it
+            if (isZipByMagic || isZipByCT) {
+              try {
+                console.log("🗺️ MappedinMap: Attempting to parse as MVF v3 format...");
+                const JSZip = (await import('jszip')).default;
+                const zip = await JSZip.loadAsync(bytes);
+                
+                // Check for MVF v3 structure (manifest.geojson, floors.geojson, locations.json)
+                const hasManifest = zip.file("manifest.geojson") !== null;
+                const hasFloors = zip.file("floors.geojson") !== null;
+                const hasLocations = zip.file("locations.json") !== null;
+                
+                if (hasManifest && hasFloors) {
+                  console.log("🗺️ MappedinMap: Detected MVF v3 format! Parsing GeoJSON files...");
+                  
+                  // Parse MVF v3 structure
+                  const manifestText = await zip.file("manifest.geojson")!.async("text");
+                  const floorsText = await zip.file("floors.geojson")!.async("text");
+                  const locationsText = hasLocations ? await zip.file("locations.json")!.async("text") : "[]";
+                  
+                  const manifest = JSON.parse(manifestText);
+                  const floors = JSON.parse(floorsText);
+                  const locations = JSON.parse(locationsText);
+                  
+                  console.log("🗺️ MVF v3 manifest:", manifest);
+                  console.log("🗺️ MVF v3 floors:", floors);
+                  console.log("🗺️ MVF v3 locations count:", locations.length || locations?.features?.length || 0);
+                  
+                  // For MVF v3, we need to use the API key/secret approach or get proper mapData
+                  // Try using client key if available
+                  if (clientKey && typeof (mod as any).getMapData === "function") {
+                    console.log("🗺️ MappedinMap: Attempting to fetch map data from Mappedin API using client key...");
+                    try {
+                      // Use the API to get the proper map data structure
+                      const mapData = await (mod as any).getMapData({
+                        key: clientKey,
+                        secret: clientSecret || undefined,
+                        mapId: effectiveMapId,
+                      });
+                      
+                      if (mapData) {
+                        console.log("🗺️ MappedinMap: Successfully fetched map data from API, initializing map...");
+                        const mapInstance = await mod.show3dMap(containerRef.current!, mapData);
+                        instanceRef.current = mapInstance;
+                        setMap(mapInstance);
+                        
+                        // Store MVF v3 data for overlay matching
+                        try {
+                          (mapInstance as any).__mvfV3 = { manifest, floors, locations };
+                          (mapInstance as any).__mapData = mapData;
+                        } catch {}
+                        setMapDataState(mapData);
+                        
+                        if (onMapReady) onMapReady(mapInstance);
+                        return;
+                      }
+                    } catch (apiError) {
+                      console.warn("🗺️ MappedinMap: API fetch failed:", apiError);
+                    }
+                  }
+                  
+                  // If no client key/secret, we can't render MVF v3 directly
+                  // The SDK needs either API credentials or server-side mapData
+                  console.warn("🗺️ MappedinMap: MVF v3 requires API key/secret or server-provided mapData.");
+                  throw new Error("MVF v3 detected but cannot initialize: SDK requires API credentials (key/secret) or server-fetched mapData. Local MVF v3 files cannot be rendered directly without API access.");
+                }
+              } catch (mvfV3Error) {
+                console.warn("🗺️ MappedinMap: MVF v3 parsing failed, trying v2 parsers:", mvfV3Error);
+              }
+            }
 
             if (isJsonCT && bytes.length > 0 && bytes[0] !== 0x50) {
               // Try plain JSON MVF (some portals export uncompressed JSON)
@@ -191,6 +262,61 @@ export default function MappedinMap({
         }
 
         // Ask the server for the best payload (mapData, mvfBase64, or outdoorViewToken).
+        // Load SDK first
+        const mod = await import("@mappedin/mappedin-js/lib/esm/index.js");
+        console.log("MappedinMap: mappedin module loaded. keys:", Object.keys(mod));
+        
+        // Try using getVenue() like React Native app (requires client key + secret)
+        if (clientKey && clientSecret && typeof (mod as any).getVenue === "function") {
+          try {
+            console.log("🗺️ MappedinMap: Fetching venue using getVenue() (like React Native)...");
+            const venue = await (mod as any).getVenue({
+              venue: effectiveMapId,
+              clientId: clientKey,
+              clientSecret: clientSecret,
+            });
+            
+            if (venue) {
+              console.log("🗺️ MappedinMap: Successfully fetched venue data, initializing...");
+              const mapInstance = await mod.show3dMap(containerRef.current, venue);
+              instanceRef.current = mapInstance;
+              setMap(mapInstance);
+              try { (mapInstance as any).__mapData = venue; } catch {}
+              setMapDataState(venue);
+              if (onMapReady) onMapReady(mapInstance);
+              return;
+            }
+          } catch (venueErr) {
+            console.warn("🗺️ MappedinMap: getVenue() failed:", venueErr);
+          }
+        }
+        
+        // Fallback: Try using API key directly to fetch map data (older approach)
+        if (clientKey && typeof (mod as any).getMapData === "function") {
+          try {
+            console.log("🗺️ MappedinMap: Fetching map data from Mappedin API using client key...");
+            const mapData = await (mod as any).getMapData({
+              key: clientKey,
+              secret: clientSecret || undefined,
+              mapId: effectiveMapId,
+            });
+            
+            if (mapData) {
+              console.log("🗺️ MappedinMap: Successfully fetched map data, initializing...");
+              const mapInstance = await mod.show3dMap(containerRef.current, mapData);
+              instanceRef.current = mapInstance;
+              setMap(mapInstance);
+              try { (mapInstance as any).__mapData = mapData; } catch {}
+              setMapDataState(mapData);
+              if (onMapReady) onMapReady(mapInstance);
+              return;
+            }
+          } catch (apiErr) {
+            console.warn("🗺️ MappedinMap: API fetch failed:", apiErr);
+          }
+        }
+        
+        // Fallback: try server function
         try {
           mapDataResponse = await fetchMappedinMapData(effectiveMapId);
           console.log("MappedinMap: fetched mapDataResponse from server:", mapDataResponse);
@@ -199,10 +325,6 @@ export default function MappedinMap({
         }
 
         // If server returned mapData, use it directly with show3dMap
-        // Load SDK first
-        const mod = await import("@mappedin/mappedin-js/lib/esm/index.js");
-        console.log("MappedinMap: mappedin module loaded. keys:", Object.keys(mod));
-
         if (mapDataResponse?.mapData) {
           try {
             console.log("MappedinMap: initializing show3dMap with server-provided mapData...");

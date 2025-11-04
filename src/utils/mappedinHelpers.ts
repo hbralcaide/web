@@ -41,6 +41,7 @@ function normalizeFunctionsBase(raw?: string): string {
 const NORMALIZED_BASE = normalizeFunctionsBase(import.meta.env.VITE_SUPABASE_FUNCTIONS_URL as string | undefined);
 const tokenUrl = `${NORMALIZED_BASE}/mappedin_token`;
 const mapDataUrl = `${NORMALIZED_BASE}/mappedin_mapdata`;
+const mvfLocalUrl = `${NORMALIZED_BASE}/mappedin_mvf_local`;
 
 // Add retry functionality
 async function fetchWithRetry(url: string, init?: RequestInit, retries = 3) {
@@ -80,6 +81,40 @@ async function fetchWithRetry(url: string, init?: RequestInit, retries = 3) {
 
 async function doFetch(url: string, init?: RequestInit) {
   return fetchWithRetry(url, init);
+}
+
+/**
+ * Fetch MVF v3 file from Supabase Storage via edge function
+ */
+export async function fetchMappedinMVFLocal(): Promise<{ mvfBase64: string } | null> {
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!anonKey) {
+    console.warn("VITE_SUPABASE_ANON_KEY missing; cannot call function.");
+    return null;
+  }
+
+  try {
+    console.log("🗺️ Fetching MVF from local Supabase Storage via function...");
+    const { res, body } = await doFetch(mvfLocalUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${anonKey}`,
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (!res.ok) {
+      console.warn("fetchMappedinMVFLocal returned non-ok:", res.status, body);
+      return null;
+    }
+
+    console.log("🗺️ Successfully fetched MVF from local storage, size:", body.size);
+    return body;
+  } catch (err) {
+    console.warn("fetchMappedinMVFLocal failed:", err);
+    return null;
+  }
 }
 
 /**

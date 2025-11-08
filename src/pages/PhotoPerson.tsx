@@ -16,6 +16,15 @@ export default function PhotoPerson() {
 
     // Load saved data when component mounts
     useEffect(() => {
+        // Check if this is a re-upload scenario
+        const isReupload = localStorage.getItem('reuploadDocumentType') === 'person_photo'
+        
+        if (isReupload) {
+            // Don't load the previous photo for re-upload
+            console.log('Re-upload mode: Starting fresh without previous photo')
+            return
+        }
+        
         const applicationData = JSON.parse(localStorage.getItem('vendorApplicationData') || '{}')
         if (applicationData.personPhoto) {
             setPreview(applicationData.personPhoto.preview)
@@ -34,9 +43,22 @@ export default function PhotoPerson() {
                 throw new Error('No application ID found')
             }
 
+            // Check if this is a reupload
+            const isReupload = localStorage.getItem('reuploadDocumentType') === 'person_photo'
+            
+            const updateData: any = {
+                person_photo: photoUrl,
+                person_photo_approved: null, // Reset approval status for re-review
+            }
+            
+            // If reupload, mark as re-uploaded
+            if (isReupload) {
+                updateData.person_photo_reuploaded = true
+            }
+
             const { error } = await supabase
                 .from('vendor_applications')
-                .update({ person_photo: photoUrl })
+                .update(updateData)
                 .eq('id', vendorApplicationId)
 
             if (error) throw error

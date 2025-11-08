@@ -247,11 +247,102 @@ export default function Vendors() {
 
     useEffect(() => {
         fetchVendors();
+
+        // Set up real-time subscription for vendor_applications
+        const channel = supabase
+            .channel('vendor_applications_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+                    schema: 'public',
+                    table: 'vendor_applications'
+                },
+                (payload) => {
+                    console.log('Real-time change detected:', payload);
+                    // Refetch vendors when any change occurs
+                    fetchVendors();
+                }
+            )
+            .subscribe();
+
+        // Cleanup subscription on unmount
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
+
+    const autoDeleteRejectedApplicants = async () => {
+        try {
+            // Find all rejected applications
+            const { data: rejectedApps, error: fetchError } = await supabase
+                .from('vendor_applications')
+                .select('id')
+                .eq('status', 'rejected');
+
+            if (fetchError) {
+                console.error('Error fetching rejected applications:', fetchError);
+                return;
+            }
+
+            if (rejectedApps && rejectedApps.length > 0) {
+                // Delete all rejected applications
+                const { error: deleteError } = await supabase
+                    .from('vendor_applications')
+                    .delete()
+                    .eq('status', 'rejected');
+
+                if (deleteError) {
+                    console.error('Error deleting rejected applications:', deleteError);
+                } else {
+                    console.log(`✅ Automatically deleted ${rejectedApps.length} rejected application(s)`);
+                }
+            }
+        } catch (error) {
+            console.error('Error in autoDeleteRejectedApplicants:', error);
+        }
+    };
+
+    const autoDeleteActiveVendors = async () => {
+        try {
+            // Find all applications with Active status (they should be in vendor_profiles only)
+            const { data: activeApps, error: fetchError } = await supabase
+                .from('vendor_applications')
+                .select('id')
+                .eq('status', 'Active');
+
+            if (fetchError) {
+                console.error('Error fetching active applications:', fetchError);
+                return;
+            }
+
+            if (activeApps && activeApps.length > 0) {
+                // Delete all active applications (they're already in vendor_profiles as existing vendors)
+                const { error: deleteError } = await supabase
+                    .from('vendor_applications')
+                    .delete()
+                    .eq('status', 'Active');
+
+                if (deleteError) {
+                    console.error('Error deleting active applications:', deleteError);
+                } else {
+                    console.log(`✅ Automatically deleted ${activeApps.length} active application(s) - they are now existing vendors`);
+                }
+            }
+        } catch (error) {
+            console.error('Error in autoDeleteActiveVendors:', error);
+        }
+    };
 
     const fetchVendors = async () => {
         try {
             setLoading(true);
+
+            // Auto-delete rejected applicants before fetching
+            await autoDeleteRejectedApplicants();
+            
+            // Auto-delete active vendors (they're already in vendor_profiles)
+            await autoDeleteActiveVendors();
 
             // Fetch vendor applications from vendor_applications table
             const { data: applicationsData, error: applicationsError } = await (supabase as any)
@@ -502,6 +593,55 @@ export default function Vendors() {
                 [`${approvalFieldName}_rejection_reason`]: action === 'reject' ? rejectionReason : null
             }));
 
+            // Check if all initial documents are now approved (for partially_approved status)
+            if (selectedVendor.status === 'partially_approved' && action === 'approve') {
+                // Fetch the updated application to check all documents
+                const { data: updatedApp, error: fetchError } = await (supabase as any)
+                    .from('vendor_applications')
+                    .select('person_photo_approved, barangay_clearance_approved, id_front_photo_approved, id_back_photo_approved, birth_certificate_approved, marriage_certificate_approved, marital_status')
+                    .eq('id', vendorDocuments.application.id)
+                    .single()
+
+                if (!fetchError && updatedApp) {
+                    // Check if all required documents are approved
+                    const requiredDocsApproved = 
+                        updatedApp.person_photo_approved === true &&
+                        updatedApp.barangay_clearance_approved === true &&
+                        updatedApp.id_front_photo_approved === true &&
+                        updatedApp.id_back_photo_approved === true &&
+                        updatedApp.birth_certificate_approved === true &&
+                        (updatedApp.marital_status === 'Single' || updatedApp.marriage_certificate_approved === true);
+
+                    if (requiredDocsApproved) {
+                        console.log('All required documents are now approved, updating status to Pending');
+                        
+                        // Update vendor application status back to 'Pending' for final review
+                        const { error: statusUpdateError } = await (supabase as any)
+                            .from('vendor_applications')
+                            .update({ status: 'Pending' })
+                            .eq('id', vendorDocuments.application.id);
+
+                        if (statusUpdateError) {
+                            console.error('Error updating status to Pending:', statusUpdateError);
+                        } else {
+                            console.log('Status successfully updated to Pending');
+                            // Update selectedVendor status locally
+                            setSelectedVendor((prev: any) => prev ? { ...prev, status: 'Pending' } : prev);
+                        }
+
+                        setApprovalModalData({
+                            type: 'success',
+                            title: 'Success',
+                            message: `All documents are now approved! Application status updated to Pending for final review.`
+                        });
+                        setShowApprovalModal(true);
+                        // Refresh the vendor list
+                        await fetchVendors();
+                        return;
+                    }
+                }
+            }
+
             // Check if this is a raffle winner and if both business permit and cedula are now approved
             if ((selectedVendor.status === 'won_raffle' || selectedVendor.status === 'documents_submitted') && action === 'approve' &&
                 (documentType === 'business_permit_document' || documentType === 'cedula_document')) {
@@ -739,7 +879,12 @@ export default function Vendors() {
 
             if (updateError) {
                 console.error('Failed to update application status:', updateError);
-                alert('Failed to update application status.');
+                setApprovalModalData({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to update application status. Please try again.'
+                });
+                setShowApprovalModal(true);
                 return;
             }
 
@@ -748,10 +893,20 @@ export default function Vendors() {
             setVendorDocuments(null);
             await fetchVendors();
 
-            alert(`Vendor ${vendor.first_name} ${vendor.last_name} has been marked as partially approved. They need to re-upload rejected documents before stall assignment.`);
+            setApprovalModalData({
+                type: 'success',
+                title: 'Partially Approved',
+                message: `Vendor ${vendor.first_name} ${vendor.last_name} has been marked as partially approved. They need to re-upload rejected documents before stall assignment.`
+            });
+            setShowApprovalModal(true);
         } catch (error) {
             console.error('Error in handlePartialApproval:', error);
-            alert('An error occurred during partial approval.');
+            setApprovalModalData({
+                type: 'error',
+                title: 'Error',
+                message: 'An error occurred during partial approval.'
+            });
+            setShowApprovalModal(true);
         }
     };
 
@@ -768,7 +923,12 @@ export default function Vendors() {
 
             if (updateError) {
                 console.error('Failed to update application status:', updateError);
-                alert('Failed to update application status.');
+                setApprovalModalData({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to update application status. Please try again.'
+                });
+                setShowApprovalModal(true);
                 return;
             }
 
@@ -786,117 +946,187 @@ export default function Vendors() {
             setShowApprovalModal(true);
         } catch (error) {
             console.error('Error in handleApproveForRaffle:', error);
-            alert('An error occurred while approving for raffle.');
+            setApprovalModalData({
+                type: 'error',
+                title: 'Error',
+                message: 'An error occurred while approving for raffle.'
+            });
+            setShowApprovalModal(true);
         }
     };
 
 
 
     const handleDeactivateVendor = async (vendor: VendorProfile) => {
-        if (!confirm(`Are you sure you want to deactivate ${vendor.first_name} ${vendor.last_name}? This will free up their stall and set their status to inactive.`)) {
-            return;
-        }
+        setConfirmationModalData({
+            title: 'Deactivate Vendor',
+            message: `Are you sure you want to deactivate ${vendor.first_name} ${vendor.last_name}? This will free up their stall and set their status to inactive.`,
+            onConfirm: async () => {
+                try {
+                    setShowConfirmationModal(false);
+                    // If vendor has an assigned stall, free it up
+                    if (vendor.stalls && vendor.stalls.length > 0) {
+                        const { error: stallError } = await (supabase as any)
+                            .from('stalls')
+                            .update({
+                                vendor_profile_id: null,
+                                status: 'vacant'
+                            })
+                            .eq('id', vendor.stalls[0].id);
 
-        try {
-            // If vendor has an assigned stall, free it up
-            if (vendor.stalls && vendor.stalls.length > 0) {
-                const { error: stallError } = await (supabase as any)
-                    .from('stalls')
-                    .update({
-                        vendor_profile_id: null,
-                        status: 'vacant'
-                    })
-                    .eq('id', vendor.stalls[0].id);
+                        if (stallError) {
+                            console.error('Error freeing up stall:', stallError);
+                            setApprovalModalData({
+                                type: 'error',
+                                title: 'Error',
+                                message: 'Failed to free up assigned stall. Please try again.'
+                            });
+                            setShowApprovalModal(true);
+                            return;
+                        }
+                    }
 
-                if (stallError) {
-                    console.error('Error freeing up stall:', stallError);
-                    alert('Failed to free up assigned stall. Please try again.');
-                    return;
+                    // Update vendor status to inactive
+                    const { error: updateError } = await (supabase as any)
+                        .from('vendor_profiles')
+                        .update({
+                            status: 'Inactive',
+                            application_status: 'inactive'
+                        })
+                        .eq('id', vendor.id);
+
+                    if (updateError) {
+                        console.error('Error deactivating vendor:', updateError);
+                        setApprovalModalData({
+                            type: 'error',
+                            title: 'Error',
+                            message: 'Failed to deactivate vendor. Please try again.'
+                        });
+                        setShowApprovalModal(true);
+                        return;
+                    }
+
+                    // Refresh the vendors list
+                    await fetchVendors();
+                    setApprovalModalData({
+                        type: 'success',
+                        title: 'Success',
+                        message: `Vendor ${vendor.first_name} ${vendor.last_name} has been deactivated successfully.`
+                    });
+                    setShowApprovalModal(true);
+                } catch (error) {
+                    console.error('Error in handleDeactivateVendor:', error);
+                    setApprovalModalData({
+                        type: 'error',
+                        title: 'Error',
+                        message: 'An unexpected error occurred while deactivating the vendor.'
+                    });
+                    setShowApprovalModal(true);
                 }
-            }
-
-            // Update vendor status to inactive
-            const { error: updateError } = await (supabase as any)
-                .from('vendor_profiles')
-                .update({
-                    status: 'Inactive',
-                    application_status: 'inactive'
-                })
-                .eq('id', vendor.id);
-
-            if (updateError) {
-                console.error('Error deactivating vendor:', updateError);
-                alert('Failed to deactivate vendor. Please try again.');
-                return;
-            }
-
-            // Refresh the vendors list
-            await fetchVendors();
-            alert(`Vendor ${vendor.first_name} ${vendor.last_name} has been deactivated successfully.`);
-        } catch (error) {
-            console.error('Error in handleDeactivateVendor:', error);
-            alert('An unexpected error occurred while deactivating the vendor.');
-        }
+            },
+            type: 'warning'
+        });
+        setShowConfirmationModal(true);
     };
 
     const handleReactivateVendor = async (vendor: VendorProfile) => {
-        if (!confirm(`Are you sure you want to reactivate ${vendor.first_name} ${vendor.last_name}? This will set their status back to pending for approval.`)) {
-            return;
-        }
+        setConfirmationModalData({
+            title: 'Reactivate Vendor',
+            message: `Are you sure you want to reactivate ${vendor.first_name} ${vendor.last_name}? This will set their status back to pending for approval.`,
+            onConfirm: async () => {
+                try {
+                    setShowConfirmationModal(false);
+                    // Update vendor status to pending for reactivation
+                    const { error: updateError } = await (supabase as any)
+                        .from('vendor_profiles')
+                        .update({
+                            status: 'Pending',
+                            application_status: 'pending'
+                        })
+                        .eq('id', vendor.id);
 
-        try {
-            // Update vendor status to pending for reactivation
-            const { error: updateError } = await (supabase as any)
-                .from('vendor_profiles')
-                .update({
-                    status: 'Pending',
-                    application_status: 'pending'
-                })
-                .eq('id', vendor.id);
+                    if (updateError) {
+                        console.error('Error reactivating vendor:', updateError);
+                        setApprovalModalData({
+                            type: 'error',
+                            title: 'Error',
+                            message: 'Failed to reactivate vendor. Please try again.'
+                        });
+                        setShowApprovalModal(true);
+                        return;
+                    }
 
-            if (updateError) {
-                console.error('Error reactivating vendor:', updateError);
-                alert('Failed to reactivate vendor. Please try again.');
-                return;
-            }
-
-            // Refresh the vendors list
-            await fetchVendors();
-            alert(`Vendor ${vendor.first_name} ${vendor.last_name} has been reactivated and is now pending approval.`);
-        } catch (error) {
-            console.error('Error in handleReactivateVendor:', error);
-            alert('An unexpected error occurred while reactivating the vendor.');
-        }
+                    // Refresh the vendors list
+                    await fetchVendors();
+                    setApprovalModalData({
+                        type: 'success',
+                        title: 'Success',
+                        message: `Vendor ${vendor.first_name} ${vendor.last_name} has been reactivated and is now pending approval.`
+                    });
+                    setShowApprovalModal(true);
+                } catch (error) {
+                    console.error('Error in handleReactivateVendor:', error);
+                    setApprovalModalData({
+                        type: 'error',
+                        title: 'Error',
+                        message: 'An unexpected error occurred while reactivating the vendor.'
+                    });
+                    setShowApprovalModal(true);
+                }
+            },
+            type: 'approve'
+        });
+        setShowConfirmationModal(true);
     };
 
     const handleArchiveVendor = async (vendor: VendorProfile) => {
-        if (!confirm(`Are you sure you want to archive ${vendor.first_name} ${vendor.last_name}? This will mark them as archived but keep their data for records.`)) {
-            return;
-        }
+        setConfirmationModalData({
+            title: 'Archive Vendor',
+            message: `Are you sure you want to archive ${vendor.first_name} ${vendor.last_name}? This will mark them as archived but keep their data for records.`,
+            onConfirm: async () => {
+                try {
+                    setShowConfirmationModal(false);
+                    // Update vendor status to archived
+                    const { error: updateError } = await (supabase as any)
+                        .from('vendor_profiles')
+                        .update({
+                            status: 'Archived',
+                            application_status: 'archived'
+                        })
+                        .eq('id', vendor.id);
 
-        try {
-            // Update vendor status to archived
-            const { error: updateError } = await (supabase as any)
-                .from('vendor_profiles')
-                .update({
-                    status: 'Archived',
-                    application_status: 'archived'
-                })
-                .eq('id', vendor.id);
+                    if (updateError) {
+                        console.error('Error archiving vendor:', updateError);
+                        setApprovalModalData({
+                            type: 'error',
+                            title: 'Error',
+                            message: 'Failed to archive vendor. Please try again.'
+                        });
+                        setShowApprovalModal(true);
+                        return;
+                    }
 
-            if (updateError) {
-                console.error('Error archiving vendor:', updateError);
-                alert('Failed to archive vendor. Please try again.');
-                return;
-            }
-
-            // Refresh the vendors list
-            await fetchVendors();
-            alert(`Vendor ${vendor.first_name} ${vendor.last_name} has been archived successfully.`);
-        } catch (error) {
-            console.error('Error in handleArchiveVendor:', error);
-            alert('An unexpected error occurred while archiving the vendor.');
-        }
+                    // Refresh the vendors list
+                    await fetchVendors();
+                    setApprovalModalData({
+                        type: 'success',
+                        title: 'Success',
+                        message: `Vendor ${vendor.first_name} ${vendor.last_name} has been archived successfully.`
+                    });
+                    setShowApprovalModal(true);
+                } catch (error) {
+                    console.error('Error in handleArchiveVendor:', error);
+                    setApprovalModalData({
+                        type: 'error',
+                        title: 'Error',
+                        message: 'An unexpected error occurred while archiving the vendor.'
+                    });
+                    setShowApprovalModal(true);
+                }
+            },
+            type: 'warning'
+        });
+        setShowConfirmationModal(true);
     };
 
     const handleVendorRowClick = (vendor: VendorProfile) => {
@@ -906,37 +1136,58 @@ export default function Vendors() {
 
     const handleBulkAction = async (action: 'delete' | 'deactivate' | 'reactivate') => {
         if (selectedVendors.length === 0) {
-            alert('Please select vendors first.');
+            setApprovalModalData({
+                type: 'error',
+                title: 'No Selection',
+                message: 'Please select vendors first.'
+            });
+            setShowApprovalModal(true);
             return;
         }
 
         const actionText = action === 'delete' ? 'delete' : action === 'deactivate' ? 'deactivate' : 'reactivate';
-        if (!confirm(`Are you sure you want to ${actionText} ${selectedVendors.length} selected vendor(s)?`)) {
-            return;
-        }
+        setConfirmationModalData({
+            title: `Bulk ${actionText.charAt(0).toUpperCase() + actionText.slice(1)}`,
+            message: `Are you sure you want to ${actionText} ${selectedVendors.length} selected vendor(s)?`,
+            onConfirm: async () => {
+                try {
+                    setShowConfirmationModal(false);
+                    for (const vendorId of selectedVendors) {
+                        const vendor = vendors.find(v => v.id === vendorId);
+                        if (!vendor) continue;
 
-        try {
-            for (const vendorId of selectedVendors) {
-                const vendor = vendors.find(v => v.id === vendorId);
-                if (!vendor) continue;
-
-                switch (action) {
-                    case 'delete':
-                        await handleDeleteVendor(vendor);
-                        break;
-                    case 'deactivate':
-                        await handleDeactivateVendor(vendor);
-                        break;
-                    case 'reactivate':
-                        await handleReactivateVendor(vendor);
-                        break;
+                        switch (action) {
+                            case 'delete':
+                                await handleDeleteVendor(vendor);
+                                break;
+                            case 'deactivate':
+                                await handleDeactivateVendor(vendor);
+                                break;
+                            case 'reactivate':
+                                await handleReactivateVendor(vendor);
+                                break;
+                        }
+                    }
+                    setSelectedVendors([]);
+                    setApprovalModalData({
+                        type: 'success',
+                        title: 'Success',
+                        message: `Successfully ${actionText}d ${selectedVendors.length} vendor(s).`
+                    });
+                    setShowApprovalModal(true);
+                } catch (error) {
+                    console.error(`Error in bulk ${action}:`, error);
+                    setApprovalModalData({
+                        type: 'error',
+                        title: 'Error',
+                        message: `An error occurred during bulk ${action}.`
+                    });
+                    setShowApprovalModal(true);
                 }
-            }
-            setSelectedVendors([]);
-        } catch (error) {
-            console.error(`Error in bulk ${action}:`, error);
-            alert(`An error occurred during bulk ${action}.`);
-        }
+            },
+            type: action === 'delete' ? 'reject' : 'warning'
+        });
+        setShowConfirmationModal(true);
     };
 
     const handleSelectAll = () => {
@@ -956,58 +1207,83 @@ export default function Vendors() {
     };
 
     const handleDeleteVendor = async (vendor: VendorProfile) => {
-        if (!confirm(`Are you sure you want to delete ${vendor.first_name} ${vendor.last_name}? This action cannot be undone.`)) {
-            return;
-        }
+        setConfirmationModalData({
+            title: 'Delete Vendor',
+            message: `Are you sure you want to delete ${vendor.first_name} ${vendor.last_name}? This action cannot be undone.`,
+            onConfirm: async () => {
+                try {
+                    setShowConfirmationModal(false);
+                    // If vendor has an assigned stall, free it up first
+                    if (vendor.stalls && vendor.stalls.length > 0) {
+                        const { error: stallError } = await (supabase as any)
+                            .from('stalls')
+                            .update({
+                                vendor_profile_id: null,
+                                status: 'vacant'
+                            })
+                            .eq('id', vendor.stalls[0].id);
 
-        try {
-            // If vendor has an assigned stall, free it up first
-            if (vendor.stalls && vendor.stalls.length > 0) {
-                const { error: stallError } = await (supabase as any)
-                    .from('stalls')
-                    .update({
-                        vendor_profile_id: null,
-                        status: 'vacant'
-                    })
-                    .eq('id', vendor.stalls[0].id);
+                        if (stallError) {
+                            console.error('Error freeing up stall:', stallError);
+                            setApprovalModalData({
+                                type: 'error',
+                                title: 'Error',
+                                message: 'Failed to free up assigned stall. Please try again.'
+                            });
+                            setShowApprovalModal(true);
+                            return;
+                        }
+                    }
 
-                if (stallError) {
-                    console.error('Error freeing up stall:', stallError);
-                    alert('Failed to free up assigned stall. Please try again.');
-                    return;
+                    // Delete vendor products if any
+                    const { error: productsError } = await (supabase as any)
+                        .from('vendor_products')
+                        .delete()
+                        .eq('vendor_id', vendor.id);
+
+                    if (productsError) {
+                        console.error('Error deleting vendor products:', productsError);
+                        // Continue with vendor deletion even if products deletion fails
+                    }
+
+                    // Delete the vendor profile
+                    const { error: vendorError } = await (supabase as any)
+                        .from('vendor_profiles')
+                        .delete()
+                        .eq('id', vendor.id);
+
+                    if (vendorError) {
+                        console.error('Error deleting vendor:', vendorError);
+                        setApprovalModalData({
+                            type: 'error',
+                            title: 'Error',
+                            message: 'Failed to delete vendor. Please try again.'
+                        });
+                        setShowApprovalModal(true);
+                        return;
+                    }
+
+                    // Refresh the vendors list
+                    await fetchVendors();
+                    setApprovalModalData({
+                        type: 'success',
+                        title: 'Success',
+                        message: `Vendor ${vendor.first_name} ${vendor.last_name} has been deleted successfully.`
+                    });
+                    setShowApprovalModal(true);
+                } catch (error) {
+                    console.error('Error in handleDeleteVendor:', error);
+                    setApprovalModalData({
+                        type: 'error',
+                        title: 'Error',
+                        message: 'An unexpected error occurred while deleting the vendor.'
+                    });
+                    setShowApprovalModal(true);
                 }
-            }
-
-            // Delete vendor products if any
-            const { error: productsError } = await (supabase as any)
-                .from('vendor_products')
-                .delete()
-                .eq('vendor_id', vendor.id);
-
-            if (productsError) {
-                console.error('Error deleting vendor products:', productsError);
-                // Continue with vendor deletion even if products deletion fails
-            }
-
-            // Delete the vendor profile
-            const { error: vendorError } = await (supabase as any)
-                .from('vendor_profiles')
-                .delete()
-                .eq('id', vendor.id);
-
-            if (vendorError) {
-                console.error('Error deleting vendor:', vendorError);
-                alert('Failed to delete vendor. Please try again.');
-                return;
-            }
-
-            // Refresh the vendors list
-            await fetchVendors();
-            alert(`Vendor ${vendor.first_name} ${vendor.last_name} has been deleted successfully.`);
-        } catch (error) {
-            console.error('Error in handleDeleteVendor:', error);
-            alert('An unexpected error occurred while deleting the vendor.');
-        }
+            },
+            type: 'reject'
+        });
+        setShowConfirmationModal(true);
     };
 
     const getDocumentApprovalStatus = (documentType: string) => {
@@ -1092,23 +1368,27 @@ export default function Vendors() {
                 <div className="flex space-x-2">
                     <button
                         onClick={handleApprove}
-                        disabled={isUpdating || approvalStatus.status === 'approved'}
-                        className={`px-3 py-1 text-xs rounded ${isUpdating || approvalStatus.status === 'approved'
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                            }`}
-                    >
-                        {isUpdating ? 'Updating...' : 'Approve'}
-                    </button>
-                    <button
-                        onClick={handleReject}
                         disabled={isUpdating || approvalStatus.status === 'rejected'}
                         className={`px-3 py-1 text-xs rounded ${isUpdating || approvalStatus.status === 'rejected'
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : approvalStatus.status === 'approved'
+                                ? 'bg-green-200 text-green-800 cursor-default'
+                                : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
                     >
-                        {isUpdating ? 'Updating...' : 'Reject'}
+                        {isUpdating ? 'Updating...' : approvalStatus.status === 'approved' ? '✓ Approved' : 'Approve'}
+                    </button>
+                    <button
+                        onClick={handleReject}
+                        disabled={isUpdating || approvalStatus.status === 'approved'}
+                        className={`px-3 py-1 text-xs rounded ${isUpdating || approvalStatus.status === 'approved'
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : approvalStatus.status === 'rejected'
+                                ? 'bg-red-200 text-red-800 cursor-default'
+                                : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            }`}
+                    >
+                        {isUpdating ? 'Updating...' : approvalStatus.status === 'rejected' ? '✗ Rejected' : 'Reject'}
                     </button>
                 </div>
             </div>
@@ -1937,12 +2217,40 @@ export default function Vendors() {
                                                     key.endsWith('_approved') && documentApprovals[key] === false
                                                 );
 
-                                                // Check if all documents are approved
-                                                const allDocumentsApproved = Object.keys(documentApprovals).some(key =>
-                                                    key.endsWith('_approved') && documentApprovals[key] === true
-                                                ) && !hasRejectedDocuments;
+                                                // Get list of all uploaded documents that need review
+                                                const uploadedDocuments = [
+                                                    vendorDocuments.documents.person_photo && 'person_photo',
+                                                    vendorDocuments.documents.barangay_clearance && 'barangay_clearance',
+                                                    vendorDocuments.documents.id_front_photo && 'id_front_photo',
+                                                    vendorDocuments.documents.id_back_photo && 'id_back_photo',
+                                                    vendorDocuments.documents.birth_certificate && 'birth_certificate',
+                                                    vendorDocuments.documents.marriage_certificate && 'marriage_certificate',
+                                                    vendorDocuments.documents.notarized_document && 'notarized_document',
+                                                    vendorDocuments.documents.business_permit_document && 'business_permit_document',
+                                                    vendorDocuments.documents.cedula_document && 'cedula_document',
+                                                ].filter(Boolean); // Remove null/undefined values
 
-                                                if (hasRejectedDocuments) {
+                                                // Check if ALL uploaded documents have been reviewed (approved or rejected)
+                                                const allDocumentsReviewed = uploadedDocuments.every(docType => {
+                                                    const approvalKey = `${docType}_approved`;
+                                                    return documentApprovals[approvalKey] === true || documentApprovals[approvalKey] === false;
+                                                });
+
+                                                // Check if all documents are approved (and none rejected)
+                                                const allDocumentsApproved = allDocumentsReviewed && !hasRejectedDocuments;
+
+                                                if (!allDocumentsReviewed) {
+                                                    // Some documents haven't been reviewed yet
+                                                    return (
+                                                        <button
+                                                            disabled
+                                                            className="px-6 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
+                                                            title="Please review all documents before approving"
+                                                        >
+                                                            Approve Application (Review All Documents First)
+                                                        </button>
+                                                    );
+                                                } else if (hasRejectedDocuments) {
                                                     return (
                                                         <button
                                                             onClick={() => {
@@ -1980,19 +2288,6 @@ export default function Vendors() {
                                                             className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                                                         >
                                                             Approve Application
-                                                        </button>
-                                                    );
-                                                } else {
-                                                    return (
-                                                        <button
-                                                            onClick={() => {
-                                                                setShowDocumentsModal(false);
-                                                                setVendorDocuments(null);
-                                                                handleApproveForRaffle(selectedVendor);
-                                                            }}
-                                                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                                        >
-                                                            Review & Go to Raffle
                                                         </button>
                                                     );
                                                 }

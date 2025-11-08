@@ -724,14 +724,14 @@ export default function VendorStatus() {
                                         </div>
                                         <button
                                             onClick={() => navigateToPhotoPage('person_photo')}
-                                            disabled={applicationData.person_photo_reUploaded}
+                                            disabled={applicationData.person_photo_reuploaded}
                                             className={`px-4 py-2 rounded-lg text-sm flex-shrink-0 transition-colors ${
-                                                applicationData.person_photo_reUploaded
+                                                applicationData.person_photo_reuploaded
                                                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                                                     : 'bg-red-600 text-white hover:bg-red-700'
                                             }`}
                                         >
-                                            {applicationData.person_photo_reUploaded ? 'Re-uploaded' : 'Re-upload Photo'}
+                                            {applicationData.person_photo_reuploaded ? 'Re-uploaded' : 'Re-upload Photo'}
                                         </button>
                                     </div>
                                 </div>
@@ -753,14 +753,14 @@ export default function VendorStatus() {
                                         </div>
                                         <button
                                             onClick={() => navigateToPhotoPage('barangay_clearance')}
-                                            disabled={applicationData.barangay_clearance_reUploaded}
+                                            disabled={applicationData.barangay_clearance_reuploaded}
                                             className={`px-4 py-2 rounded-lg text-sm flex-shrink-0 transition-colors ${
-                                                applicationData.barangay_clearance_reUploaded
+                                                applicationData.barangay_clearance_reuploaded
                                                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                                                     : 'bg-red-600 text-white hover:bg-red-700'
                                             }`}
                                         >
-                                            {applicationData.barangay_clearance_reUploaded ? 'Re-uploaded' : 'Re-upload Document'}
+                                            {applicationData.barangay_clearance_reuploaded ? 'Re-uploaded' : 'Re-upload Document'}
                                         </button>
                                     </div>
                                 </div>
@@ -786,15 +786,27 @@ export default function VendorStatus() {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => navigateToPhotoPage('id_front_photo')}
-                                            disabled={applicationData.id_front_photo_reUploaded && applicationData.id_back_photo_reUploaded}
+                                            onClick={() => {
+                                                // Determine which ID photo was rejected
+                                                if (applicationData.id_front_photo_approved === false && applicationData.id_back_photo_approved === false) {
+                                                    // Both rejected - pass 'both'
+                                                    navigateToPhotoPage('id_both_photo')
+                                                } else if (applicationData.id_front_photo_approved === false) {
+                                                    // Only front rejected
+                                                    navigateToPhotoPage('id_front_photo')
+                                                } else {
+                                                    // Only back rejected
+                                                    navigateToPhotoPage('id_back_photo')
+                                                }
+                                            }}
+                                            disabled={applicationData.id_front_photo_reuploaded && applicationData.id_back_photo_reuploaded}
                                             className={`px-4 py-2 rounded-lg text-sm flex-shrink-0 transition-colors ${
-                                                applicationData.id_front_photo_reUploaded && applicationData.id_back_photo_reUploaded
+                                                applicationData.id_front_photo_reuploaded && applicationData.id_back_photo_reuploaded
                                                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                                                     : 'bg-red-600 text-white hover:bg-red-700'
                                             }`}
                                         >
-                                            {applicationData.id_front_photo_reUploaded && applicationData.id_back_photo_reUploaded ? 'Re-uploaded' : 'Re-upload ID'}
+                                            {applicationData.id_front_photo_reuploaded && applicationData.id_back_photo_reuploaded ? 'Re-uploaded' : 'Re-upload ID'}
                                         </button>
                                     </div>
                                 </div>
@@ -818,14 +830,14 @@ export default function VendorStatus() {
                                         </div>
                                         <button
                                             onClick={() => navigateToPhotoPage('birth_certificate')}
-                                            disabled={applicationData.birth_certificate_reUploaded}
+                                            disabled={applicationData.birth_certificate_reuploaded}
                                             className={`px-4 py-2 rounded-lg text-sm flex-shrink-0 transition-colors ${
-                                                applicationData.birth_certificate_reUploaded
+                                                applicationData.birth_certificate_reuploaded
                                                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                                                     : 'bg-red-600 text-white hover:bg-red-700'
                                             }`}
                                         >
-                                            {applicationData.birth_certificate_reUploaded ? 'Re-uploaded' : 'Re-upload Document'}
+                                            {applicationData.birth_certificate_reuploaded ? 'Re-uploaded' : 'Re-upload Document'}
                                         </button>
                                     </div>
                                 </div>
@@ -847,14 +859,14 @@ export default function VendorStatus() {
                                         </div>
                                         <button
                                             onClick={() => navigateToPhotoPage('marriage_certificate')}
-                                            disabled={applicationData.marriage_certificate_reUploaded}
+                                            disabled={applicationData.marriage_certificate_reuploaded}
                                             className={`px-4 py-2 rounded-lg text-sm flex-shrink-0 transition-colors ${
-                                                applicationData.marriage_certificate_reUploaded
+                                                applicationData.marriage_certificate_reuploaded
                                                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                                                     : 'bg-red-600 text-white hover:bg-red-700'
                                             }`}
                                         >
-                                            {applicationData.marriage_certificate_reUploaded ? 'Re-uploaded' : 'Re-upload Document'}
+                                            {applicationData.marriage_certificate_reuploaded ? 'Re-uploaded' : 'Re-upload Document'}
                                         </button>
                                     </div>
                                 </div>
@@ -876,14 +888,14 @@ export default function VendorStatus() {
                                         </div>
                                         <button
                                             onClick={() => navigateToPhotoPage('notarized_document')}
-                                            disabled={applicationData.notarized_document_reUploaded}
+                                            disabled={applicationData.notarized_document_reuploaded}
                                             className={`px-4 py-2 rounded-lg text-sm flex-shrink-0 transition-colors ${
-                                                applicationData.notarized_document_reUploaded
+                                                applicationData.notarized_document_reuploaded
                                                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                                                     : 'bg-red-600 text-white hover:bg-red-700'
                                             }`}
                                         >
-                                            {applicationData.notarized_document_reUploaded ? 'Re-uploaded' : 'Re-upload Document'}
+                                            {applicationData.notarized_document_reuploaded ? 'Re-uploaded' : 'Re-upload Document'}
                                         </button>
                                     </div>
                                 </div>
@@ -1173,3 +1185,4 @@ export default function VendorStatus() {
         </div>
     )
 }
+

@@ -72,10 +72,23 @@ const IndoorMarketMap: React.FC<IndoorMarketMapProps> = ({ onMapReady }) => {
         
         if (stallsError) throw stallsError;
         
-        // Manually join market sections with stalls
+        // Fetch all vendor profiles
+        const { data: vendorsData, error: vendorsError } = await supabase
+          .from("vendor_profiles")
+          .select("stall_number, first_name, last_name, business_name");
+        
+        if (vendorsError) console.warn('Error fetching vendors:', vendorsError);
+        
+        // Create a map of stall_number to vendor for quick lookup
+        const vendorMap = new Map(
+          (vendorsData || []).map((v: any) => [v.stall_number, v])
+        );
+        
+        // Manually join market sections and vendors with stalls
         const stallsWithSections = stallsData?.map((stall: any) => ({
           ...stall,
-          market_section: sectionsData?.find((section: any) => section.id === stall.section_id)
+          market_section: sectionsData?.find((section: any) => section.id === stall.section_id),
+          vendor: vendorMap.get(stall.stall_number)
         })) || [];
         
         console.log('📊 Sample stalls data (first 3):', stallsWithSections.slice(0, 3));
@@ -288,10 +301,20 @@ const IndoorMarketMap: React.FC<IndoorMarketMapProps> = ({ onMapReady }) => {
       const sectionCode = stall.market_section?.code?.toLowerCase() || '';
       const status = stall.status.toLowerCase();
       
+      // Add vendor name search
+      const vendorFirstName = (stall as any).vendor?.first_name?.toLowerCase() || '';
+      const vendorLastName = (stall as any).vendor?.last_name?.toLowerCase() || '';
+      const vendorFullName = `${vendorFirstName} ${vendorLastName}`.trim();
+      const businessName = (stall as any).vendor?.business_name?.toLowerCase() || '';
+      
       return stallNumber.includes(lowerQuery) ||
         sectionName.includes(lowerQuery) ||
         sectionCode.includes(lowerQuery) ||
-        status.includes(lowerQuery);
+        status.includes(lowerQuery) ||
+        vendorFirstName.includes(lowerQuery) ||
+        vendorLastName.includes(lowerQuery) ||
+        vendorFullName.includes(lowerQuery) ||
+        businessName.includes(lowerQuery);
     });
 
     setSearchResults(results);
@@ -406,7 +429,7 @@ const IndoorMarketMap: React.FC<IndoorMarketMapProps> = ({ onMapReady }) => {
             <span style={styles.searchIcon}>🔍</span>
             <input
               type="text"
-              placeholder="Search by stall number, section, or status..."
+              placeholder="Search by stall number, section, status, or vendor name..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => searchQuery && setShowSearchResults(true)}

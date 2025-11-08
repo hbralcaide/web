@@ -63,7 +63,80 @@ Your site will be live at: `https://your-project-name.vercel.app`
 
 ---
 
-## 🔍 Making Your Website Discoverable on Google
+## � Deploy Admin Invite Edge Function
+
+To enable the "Invite Admin" feature in your admin panel, you need to deploy a Supabase Edge Function.
+
+### Quick Deploy with Script (Recommended)
+
+1. **Open PowerShell in your project directory**:
+   ```powershell
+   cd c:\Users\Hannah\Desktop\web
+   ```
+
+2. **Run the deployment script**:
+   ```powershell
+   .\scripts\deploy-admin-invite.ps1
+   ```
+
+3. **Follow the prompts** - You'll need:
+   - Project ID (from Supabase Dashboard → Project Settings → General)
+   - Access Token (from Supabase Dashboard → Your Profile → Access Tokens)
+   - Supabase URL, Anon Key, Service Role Key (from Project Settings → API)
+   - Your site URL (your Vercel deployment URL)
+
+### Manual Deploy (Alternative)
+
+If you prefer manual steps:
+
+1. **Install Supabase CLI**:
+   ```powershell
+   npm install -g supabase
+   ```
+
+2. **Link your project**:
+   ```powershell
+   supabase link --project-ref YOUR_PROJECT_ID
+   ```
+
+3. **Deploy the function**:
+   ```powershell
+   supabase functions deploy invite-admin
+   ```
+
+4. **Set environment variables**:
+   ```powershell
+   supabase secrets set SUPABASE_URL=https://your-project.supabase.co
+   supabase secrets set SUPABASE_ANON_KEY=your-anon-key
+   supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   supabase secrets set PUBLIC_SITE_URL=https://your-vercel-app.vercel.app
+   ```
+
+### Verify Deployment
+
+Check if the function is deployed:
+```powershell
+supabase functions list
+```
+
+Test the invite feature:
+1. Open your app at `https://your-vercel-app.vercel.app`
+2. Log in as admin
+3. Go to "Admins" page
+4. Click "Invite New Admin" and test
+
+### Troubleshooting
+
+View function logs:
+```powershell
+supabase functions logs invite-admin --follow
+```
+
+For detailed deployment guide, see: **QUICK_START_ADMIN_INVITE.md**
+
+---
+
+## �🔍 Making Your Website Discoverable on Google
 
 ### Step 1: Update Your URLs
 

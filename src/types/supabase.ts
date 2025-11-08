@@ -277,6 +277,12 @@ export interface Database {
           birth_certificate: string | null
           marriage_certificate: string | null
           notarized_document: string | null
+          person_photo_reuploaded: boolean | null
+          barangay_clearance_reuploaded: boolean | null
+          id_front_photo_reuploaded: boolean | null
+          id_back_photo_reuploaded: boolean | null
+          birth_certificate_reuploaded: boolean | null
+          marriage_certificate_reuploaded: boolean | null
           created_at: string
           updated_at: string
         }
@@ -304,6 +310,12 @@ export interface Database {
           birth_certificate?: string | null
           marriage_certificate?: string | null
           notarized_document?: string | null
+          person_photo_reuploaded?: boolean | null
+          barangay_clearance_reuploaded?: boolean | null
+          id_front_photo_reuploaded?: boolean | null
+          id_back_photo_reuploaded?: boolean | null
+          birth_certificate_reuploaded?: boolean | null
+          marriage_certificate_reuploaded?: boolean | null
           created_at?: string
           updated_at?: string
         }
@@ -331,6 +343,12 @@ export interface Database {
           birth_certificate?: string | null
           marriage_certificate?: string | null
           notarized_document?: string | null
+          person_photo_reuploaded?: boolean | null
+          barangay_clearance_reuploaded?: boolean | null
+          id_front_photo_reuploaded?: boolean | null
+          id_back_photo_reuploaded?: boolean | null
+          birth_certificate_reuploaded?: boolean | null
+          marriage_certificate_reuploaded?: boolean | null
           created_at?: string
           updated_at?: string
         }

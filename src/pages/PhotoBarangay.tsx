@@ -12,6 +12,15 @@ export default function PhotoBarangay() {
 
     // Load saved data when component mounts
     useEffect(() => {
+        // Check if this is a re-upload scenario
+        const isReupload = localStorage.getItem('reuploadDocumentType') === 'barangay_clearance'
+        
+        if (isReupload) {
+            // Don't load the previous photo for re-upload
+            console.log('Re-upload mode: Starting fresh without previous photo')
+            return
+        }
+        
         const applicationData = JSON.parse(localStorage.getItem('vendorApplicationData') || '{}')
         if (applicationData.barangayClearance) {
             setPreview(applicationData.barangayClearance.preview)
@@ -30,9 +39,22 @@ export default function PhotoBarangay() {
                 throw new Error('No application ID found')
             }
 
+            // Check if this is a reupload
+            const isReupload = localStorage.getItem('reuploadDocumentType') === 'barangay_clearance'
+            
+            const updateData: any = {
+                barangay_clearance: photoUrl,
+                barangay_clearance_approved: null, // Reset approval status for re-review
+            }
+            
+            // If reupload, mark as re-uploaded
+            if (isReupload) {
+                updateData.barangay_clearance_reuploaded = true
+            }
+
             const { error } = await supabase
                 .from('vendor_applications')
-                .update({ barangay_clearance: photoUrl })
+                .update(updateData)
                 .eq('id', vendorApplicationId)
 
             if (error) throw error

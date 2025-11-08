@@ -310,10 +310,19 @@ export default function Raffle() {
         }
     }
 
-const generateUsername = (firstName: string, lastName: string): string => {
-  const firstNameParts = firstName.trim().split(/\s+/);
+const generateUsername = (firstName: string | null, lastName: string | null): string => {
+  // Handle null or undefined values
+  const safeFirstName = (firstName || '').trim();
+  const safeLastName = (lastName || '').trim();
+  
+  if (!safeFirstName || !safeLastName) {
+    // Return a default username if either name is missing
+    return 'user' + Date.now();
+  }
+  
+  const firstNameParts = safeFirstName.split(/\s+/);
   const firstNameInitials = firstNameParts.map(part => part.charAt(0)).join('');
-  return (firstNameInitials + lastName).toLowerCase().replace(/[^a-z0-9]/g, '');
+  return (firstNameInitials + safeLastName).toLowerCase().replace(/[^a-z0-9]/g, '');
 };
 
 const hashPassword = async (password: string): Promise<string> => {
@@ -326,10 +335,16 @@ const hashPassword = async (password: string): Promise<string> => {
 };
 
 const generateUniqueActualOccupantUsername = async (
-  firstName: string,
-  lastName: string,
+  firstName: string | null,
+  lastName: string | null,
   mainVendorUsername: string
 ): Promise<string> => {
+  // If actual occupant names are missing, return empty string
+  // (vendor profile can have null actual_occupant_username)
+  if (!firstName || !lastName) {
+    return '';
+  }
+
   const baseUsername = generateUsername(firstName, lastName);
 
   const isUsernameAvailable = async (usernameToCheck: string): Promise<boolean> => {
@@ -365,7 +380,7 @@ const generateUniqueActualOccupantUsername = async (
     counter++;
   }
 
-  return `${baseUsername}${Date.now()}`;
+  return `${baseUsername}${Math.floor(Math.random() * 1000)}`;
 };
 
 const handleRaffle = async () => {
@@ -404,13 +419,17 @@ const handleRaffle = async () => {
     const vendorPassword = `${vendorUsername}${selectedStall.stall_number.toLowerCase().replace('-', '')}`;
     const vendorPasswordHash = await hashPassword(vendorPassword);
 
+    // Handle actual occupant username and password (may be null if not provided)
     const actualOccupantUsername = await generateUniqueActualOccupantUsername(
       applicantData.actual_occupant_first_name,
       applicantData.actual_occupant_last_name,
       vendorUsername
     );
-    const actualOccupantPassword = `${actualOccupantUsername}${selectedStall.stall_number.toLowerCase().replace('-', '')}`;
-    const actualOccupantPasswordHash = await hashPassword(actualOccupantPassword);
+    
+    // Only generate password hash if actual occupant username exists
+    const actualOccupantPasswordHash = actualOccupantUsername 
+      ? await hashPassword(`${actualOccupantUsername}${selectedStall.stall_number.toLowerCase().replace('-', '')}`)
+      : null;
 
     const vendorProfile: Database['public']['Tables']['vendor_profiles']['Insert'] = {
       id: applicantData.id,
@@ -437,7 +456,8 @@ const handleRaffle = async () => {
       actual_occupant_phone: applicantData.actual_occupant_phone,
       username: vendorUsername,
       password_hash: vendorPasswordHash,
-      actual_occupant_username: actualOccupantUsername,
+      actual_occupant_username: actualOccupantUsername || null,
+      actual_occupant_password_hash: actualOccupantPasswordHash,
       actual_occupant_password_hash: actualOccupantPasswordHash,
     };
 
@@ -464,6 +484,37 @@ const handleRaffle = async () => {
       return alert('Failed to update application status.');
     }
 
+    // Reject all other applicants who applied for the same stall
+    // Get all other applications with the same preferred_stall_number or assigned_stall_number
+    const { data: otherApplicants, error: fetchOthersError } = await supabase
+      .from('vendor_applications')
+      .select('id')
+      .neq('id', selectedApplicant.id) // Not the winner
+      .or(`preferred_stall_number.eq.${selectedStall.stall_number},assigned_stall_number.eq.${selectedStall.stall_number}`)
+      .in('status', ['approved_for_raffle', 'pending_approval', 'documents_submitted']);
+
+    if (fetchOthersError) {
+      console.warn('Error fetching other applicants:', fetchOthersError);
+    }
+
+    // Update other applicants to rejected status
+    if (otherApplicants && otherApplicants.length > 0) {
+      const { error: rejectOthersError } = await supabase
+        .from('vendor_applications')
+        .update({
+          status: 'rejected',
+          rejection_reason: `Stall ${selectedStall.stall_number} was assigned to another vendor through raffle`,
+          updated_at: new Date().toISOString(),
+        })
+        .in('id', otherApplicants.map(app => app.id));
+
+      if (rejectOthersError) {
+        console.warn('Error rejecting other applicants:', rejectOthersError);
+      } else {
+        console.log(`✅ Rejected ${otherApplicants.length} other applicant(s) for stall ${selectedStall.stall_number}`);
+      }
+    }
+
     const { error: stallUpdateError } = await supabase
       .from('stalls')
       .update({ status: 'occupied', vendor_profile_id: applicantData.id })
@@ -474,7 +525,7 @@ const handleRaffle = async () => {
       return alert('Failed to update stall status.');
     }
 
-    alert(`Successfully Assigned Stall! ${applicantData.first_name} ${applicantData.last_name} has been assigned to ${selectedStall.stall_number}.`);
+    alert(`Successfully Assigned Stall! ${applicantData.first_name} ${applicantData.last_name} has been assigned to ${selectedStall.stall_number}. ${otherApplicants?.length || 0} other applicant(s) have been rejected.`);
     navigate('/admin/vendors');
   } catch (error) {
     console.error('Error in handleRaffle:', error);

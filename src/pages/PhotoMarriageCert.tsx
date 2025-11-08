@@ -12,6 +12,15 @@ export default function PhotoMarriageCert() {
 
     // Load saved data when component mounts
     useEffect(() => {
+        // Check if this is a re-upload scenario
+        const isReupload = localStorage.getItem('reuploadDocumentType') === 'marriage_certificate'
+        
+        if (isReupload) {
+            // Don't load the previous photo for re-upload
+            console.log('Re-upload mode: Starting fresh without previous photo')
+            return
+        }
+        
         const applicationData = JSON.parse(localStorage.getItem('vendorApplicationData') || '{}')
         if (applicationData.marriageCertificate) {
             setPreview(applicationData.marriageCertificate.preview)
@@ -30,9 +39,22 @@ export default function PhotoMarriageCert() {
                 throw new Error('No application ID found')
             }
 
+            // Check if this is a reupload
+            const isReupload = localStorage.getItem('reuploadDocumentType') === 'marriage_certificate'
+            
+            const updateData: any = {
+                marriage_certificate: photoUrl,
+                marriage_certificate_approved: null, // Reset approval status for re-review
+            }
+            
+            // If reupload, mark as re-uploaded
+            if (isReupload) {
+                updateData.marriage_certificate_reuploaded = true
+            }
+
             const { error } = await supabase
                 .from('vendor_applications')
-                .update({ marriage_certificate: photoUrl })
+                .update(updateData)
                 .eq('id', vendorApplicationId)
 
             if (error) throw error

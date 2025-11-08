@@ -11,9 +11,29 @@ export default function PhotoId() {
     const [backPreview, setBackPreview] = useState<string | null>(null)
     const [error, setError] = useState('')
     const [uploading, setUploading] = useState(false)
+    const [reuploadType, setReuploadType] = useState<'front' | 'back' | 'both' | null>(null)
 
     // Load saved data when component mounts
     useEffect(() => {
+        // Check if this is a re-upload scenario
+        const reuploadDocType = localStorage.getItem('reuploadDocumentType')
+        
+        // Determine which photo(s) need to be re-uploaded
+        if (reuploadDocType === 'id_front_photo') {
+            setReuploadType('front')
+            console.log('Re-upload mode: Front ID only')
+            return
+        } else if (reuploadDocType === 'id_back_photo') {
+            setReuploadType('back')
+            console.log('Re-upload mode: Back ID only')
+            return
+        } else if (reuploadDocType === 'id_both_photo') {
+            setReuploadType('both')
+            console.log('Re-upload mode: Both front and back ID')
+            return
+        }
+        
+        // Normal flow - load existing photos
         const applicationData = JSON.parse(localStorage.getItem('vendorApplicationData') || '{}')
         if (applicationData.governmentId) {
             if (applicationData.governmentId.front) {
@@ -40,9 +60,21 @@ export default function PhotoId() {
                 throw new Error('No application ID found')
             }
 
+            // Check if this is a reupload
+            const reuploadDocumentType = localStorage.getItem('reuploadDocumentType')
+            const isReupload = reuploadDocumentType === 'id_front_photo' || reuploadDocumentType === 'id_back_photo'
+
             const updateData: any = {}
-            if (frontUrl) updateData.id_front_photo = frontUrl
-            if (backUrl) updateData.id_back_photo = backUrl
+            if (frontUrl) {
+                updateData.id_front_photo = frontUrl
+                updateData.id_front_photo_approved = null // Reset approval status
+                if (isReupload) updateData.id_front_photo_reuploaded = true
+            }
+            if (backUrl) {
+                updateData.id_back_photo = backUrl
+                updateData.id_back_photo_approved = null // Reset approval status
+                if (isReupload) updateData.id_back_photo_reuploaded = true
+            }
 
             const { error } = await supabase
                 .from('vendor_applications')
@@ -290,7 +322,16 @@ export default function PhotoId() {
     }
 
     const handleNext = () => {
-        if (!frontPhoto || !backPhoto) {
+        // Validate based on what's required
+        if (reuploadType === 'front' && !frontPhoto) {
+            setError('Please upload the front ID photo')
+            return
+        }
+        if (reuploadType === 'back' && !backPhoto) {
+            setError('Please upload the back ID photo')
+            return
+        }
+        if ((reuploadType === 'both' || !reuploadType) && (!frontPhoto || !backPhoto)) {
             setError('Please take or upload both front and back photos before proceeding')
             return
         }
@@ -479,7 +520,8 @@ export default function PhotoId() {
 
                         {/* Photo Upload Area - Right Side */}
                         <div className="lg:col-span-3 space-y-8">
-                            {/* Front Photo Upload Area */}
+                            {/* Front Photo Upload Area - Show if not reupload OR if reupload is front/both */}
+                            {(!reuploadType || reuploadType === 'front' || reuploadType === 'both') && (
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Front of ID</h3>
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -546,8 +588,10 @@ export default function PhotoId() {
                                     )}
                                 </div>
                             </div>
+                            )}
 
-                            {/* Back Photo Upload Area */}
+                            {/* Back Photo Upload Area - Show if not reupload OR if reupload is back/both */}
+                            {(!reuploadType || reuploadType === 'back' || reuploadType === 'both') && (
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Back of ID</h3>
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -614,6 +658,7 @@ export default function PhotoId() {
                                     )}
                                 </div>
                             </div>
+                            )}
 
                             {error && (
                                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -633,7 +678,14 @@ export default function PhotoId() {
                         </button>
                         <button
                             onClick={handleNext}
-                            disabled={!frontPhoto || !backPhoto || uploading}
+                            disabled={
+                                uploading || 
+                                // Check based on what's required
+                                (reuploadType === 'front' && !frontPhoto) ||
+                                (reuploadType === 'back' && !backPhoto) ||
+                                (reuploadType === 'both' && (!frontPhoto || !backPhoto)) ||
+                                (!reuploadType && (!frontPhoto || !backPhoto))
+                            }
                             className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                             {uploading ? (

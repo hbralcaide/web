@@ -2188,6 +2188,8 @@ export default function ExistingVendors() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sectionFilter, setSectionFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'stall' | 'created_at'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -2759,7 +2761,30 @@ export default function ExistingVendors() {
       const hasStall = assignedStall || vendor.stall_number;
       const matchesWithStalls = activeCard !== 'withStalls' || hasStall;
 
-      return matchesSearch && matchesStatus && matchesSection && matchesWithStalls;
+      // Date range filter - filter by when vendor became active (created_at date)
+      const vendorDate = new Date(vendor.created_at);
+      const matchesDateRange = (() => {
+        if (!startDate && !endDate) return true;
+        
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+        
+        // Set time to start of day for start date
+        if (start) start.setHours(0, 0, 0, 0);
+        // Set time to end of day for end date
+        if (end) end.setHours(23, 59, 59, 999);
+        
+        if (start && end) {
+          return vendorDate >= start && vendorDate <= end;
+        } else if (start) {
+          return vendorDate >= start;
+        } else if (end) {
+          return vendorDate <= end;
+        }
+        return true;
+      })();
+
+      return matchesSearch && matchesStatus && matchesSection && matchesWithStalls && matchesDateRange;
     });
 
     // Sort the filtered results
@@ -2793,7 +2818,7 @@ export default function ExistingVendors() {
     });
 
     return filtered;
-  }, [vendors, searchTerm, statusFilter, sectionFilter, sortBy, sortOrder, stalls, activeCard]);
+  }, [vendors, searchTerm, statusFilter, sectionFilter, startDate, endDate, sortBy, sortOrder, stalls, activeCard]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedVendors.length / itemsPerPage);
@@ -3071,6 +3096,8 @@ export default function ExistingVendors() {
     setSearchTerm('');
     setStatusFilter('all');
     setSectionFilter('all');
+    setStartDate('');
+    setEndDate('');
     setSortBy('name');
     setSortOrder('asc');
     setActiveCard(null);
@@ -3425,6 +3452,34 @@ export default function ExistingVendors() {
               ))}
             </select>
           </div>
+
+          {/* Start Date Filter */}
+          <div>
+            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Active From
+            </label>
+            <input
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+
+          {/* End Date Filter */}
+          <div>
+            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Active To
+            </label>
+            <input
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
         </div>
 
         {/* Active Filters & Clear */}
@@ -3487,7 +3542,17 @@ export default function ExistingVendors() {
                 Section: {sections.find(s => s.id === sectionFilter)?.name}
               </span>
             )}
-            {!searchTerm && statusFilter === 'all' && sectionFilter === 'all' && (
+            {startDate && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                From: {new Date(startDate).toLocaleDateString()}
+              </span>
+            )}
+            {endDate && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                To: {new Date(endDate).toLocaleDateString()}
+              </span>
+            )}
+            {!searchTerm && statusFilter === 'all' && sectionFilter === 'all' && !startDate && !endDate && (
               <span className="text-gray-500">
                 No active filters
               </span>
@@ -3497,9 +3562,9 @@ export default function ExistingVendors() {
             <button
               type="button"
               onClick={clearFilters}
-              disabled={!searchTerm && statusFilter === 'all' && sectionFilter === 'all' && !activeCard}
+              disabled={!searchTerm && statusFilter === 'all' && sectionFilter === 'all' && !startDate && !endDate && !activeCard}
               className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 
-                ${searchTerm || statusFilter !== 'all' || sectionFilter !== 'all' || activeCard
+                ${searchTerm || statusFilter !== 'all' || sectionFilter !== 'all' || startDate || endDate || activeCard
                   ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
                   : 'text-gray-400 bg-gray-50 cursor-not-allowed'}`}
             >
@@ -3608,11 +3673,11 @@ export default function ExistingVendors() {
                 </svg>
                 <h3 className="mt-2 text-sm font-medium text-gray-900">No vendors found</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  {searchTerm || statusFilter !== 'all' || sectionFilter !== 'all'
+                  {searchTerm || statusFilter !== 'all' || sectionFilter !== 'all' || startDate || endDate
                     ? 'Try adjusting your filters or search terms.'
                     : 'Get started by adding your first vendor.'}
                 </p>
-                {(searchTerm || statusFilter !== 'all' || sectionFilter !== 'all') && (
+                {(searchTerm || statusFilter !== 'all' || sectionFilter !== 'all' || startDate || endDate) && (
                   <button
                     onClick={clearFilters}
                     className="mt-3 text-indigo-600 hover:text-indigo-500 text-sm font-medium"
@@ -3753,7 +3818,12 @@ export default function ExistingVendors() {
                           <td className="px-3 py-4 text-sm">
                             {vendor.phone_number ? (
                               <div className="text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded text-xs">
-                                +63 {vendor.phone_number.startsWith('9') ? vendor.phone_number : '9' + vendor.phone_number}
+                                {vendor.phone_number.startsWith('+63') 
+                                  ? vendor.phone_number 
+                                  : vendor.phone_number.startsWith('9') 
+                                    ? `+63${vendor.phone_number}` 
+                                    : `+639${vendor.phone_number}`
+                                }
                               </div>
                             ) : (
                               <div className="text-red-600 font-medium italic px-2 py-1 text-xs">

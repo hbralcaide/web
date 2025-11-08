@@ -110,7 +110,7 @@ export default function VendorApplication() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        if (stallId && sectionId) {
+        if (stallId) {
             fetchStallAndSectionInfo()
         } else {
             setError('No stall selected. Please go back and select a specific stall.')
@@ -123,6 +123,10 @@ export default function VendorApplication() {
             setLoading(true)
             setError(null)
 
+            if (!stallId) {
+                throw new Error('No stall ID provided')
+            }
+
             // Fetch stall information
             const { data: stallData, error: stallError } = await supabase
                 .from('stalls')
@@ -134,20 +138,23 @@ export default function VendorApplication() {
                 throw new Error('Stall not found')
             }
 
+            // Check if stall is available
+            if (stallData.status !== 'vacant' && stallData.status !== 'available') {
+                throw new Error('This stall is no longer available')
+            }
+
+            // Get section ID from stall or URL parameter
+            const actualSectionId = sectionId || stallData.section_id
+
             // Fetch section information
             const { data: sectionData, error: sectionError } = await supabase
                 .from('market_sections')
                 .select('*')
-                .eq('id', sectionId)
+                .eq('id', actualSectionId)
                 .single() as { data: MarketSection | null; error: any }
 
             if (sectionError || !sectionData) {
                 throw new Error('Market section not found')
-            }
-
-            // Check if stall is available
-            if (stallData.status !== 'vacant' && stallData.status !== 'available') {
-                throw new Error('This stall is no longer available')
             }
 
             setStall(stallData)

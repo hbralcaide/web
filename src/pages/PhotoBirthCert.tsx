@@ -13,6 +13,20 @@ export default function PhotoBirthCert() {
 
     // Load saved data when component mounts
     useEffect(() => {
+        // Check if this is a re-upload scenario
+        const isReupload = localStorage.getItem('reuploadDocumentType') === 'birth_certificate'
+        
+        if (isReupload) {
+            // Don't load the previous photo for re-upload
+            console.log('Re-upload mode: Starting fresh without previous photo')
+            // Still load marital status for navigation
+            const applicationData = JSON.parse(localStorage.getItem('vendorApplicationData') || '{}')
+            if (applicationData.maritalStatus) {
+                setMaritalStatus(applicationData.maritalStatus)
+            }
+            return
+        }
+        
         const applicationData = JSON.parse(localStorage.getItem('vendorApplicationData') || '{}')
         if (applicationData.birthCertificate) {
             setPreview(applicationData.birthCertificate.preview)
@@ -35,9 +49,22 @@ export default function PhotoBirthCert() {
                 throw new Error('No application ID found')
             }
 
+            // Check if this is a reupload
+            const isReupload = localStorage.getItem('reuploadDocumentType') === 'birth_certificate'
+            
+            const updateData: any = {
+                birth_certificate: photoUrl,
+                birth_certificate_approved: null, // Reset approval status for re-review
+            }
+            
+            // If reupload, mark as re-uploaded
+            if (isReupload) {
+                updateData.birth_certificate_reuploaded = true
+            }
+
             const { error } = await supabase
                 .from('vendor_applications')
-                .update({ birth_certificate: photoUrl })
+                .update(updateData)
                 .eq('id', vendorApplicationId)
 
             if (error) throw error

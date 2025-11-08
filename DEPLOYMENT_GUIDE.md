@@ -70,11 +70,13 @@ To enable the "Invite Admin" feature in your admin panel, you need to deploy a S
 ### Quick Deploy with Script (Recommended)
 
 1. **Open PowerShell in your project directory**:
+
    ```powershell
    cd c:\Users\Hannah\Desktop\web
    ```
 
 2. **Run the deployment script**:
+
    ```powershell
    .\scripts\deploy-admin-invite.ps1
    ```
@@ -90,16 +92,19 @@ To enable the "Invite Admin" feature in your admin panel, you need to deploy a S
 If you prefer manual steps:
 
 1. **Install Supabase CLI**:
+
    ```powershell
    npm install -g supabase
    ```
 
 2. **Link your project**:
+
    ```powershell
    supabase link --project-ref YOUR_PROJECT_ID
    ```
 
 3. **Deploy the function**:
+
    ```powershell
    supabase functions deploy invite-admin
    ```
@@ -115,11 +120,13 @@ If you prefer manual steps:
 ### Verify Deployment
 
 Check if the function is deployed:
+
 ```powershell
 supabase functions list
 ```
 
 Test the invite feature:
+
 1. Open your app at `https://your-vercel-app.vercel.app`
 2. Log in as admin
 3. Go to "Admins" page
@@ -128,6 +135,7 @@ Test the invite feature:
 ### Troubleshooting
 
 View function logs:
+
 ```powershell
 supabase functions logs invite-admin --follow
 ```

@@ -13,6 +13,7 @@ Run the automated deployment script:
 ```
 
 This script will:
+
 1. Check if Supabase CLI is installed (installs if needed)
 2. Link your Supabase project
 3. Deploy the `invite-admin` Edge Function
@@ -22,6 +23,7 @@ This script will:
 ### What You'll Need
 
 Before running the script, have these ready:
+
 - **Project ID**: Found in Supabase Dashboard → Project Settings → General → Reference ID
 - **Access Token**: Create one in Supabase Dashboard → Your Profile → Access Tokens
 - **Supabase URL**: From Project Settings → API → Project URL
@@ -32,33 +34,41 @@ Before running the script, have these ready:
 ### Manual Deployment
 
 If you prefer to run commands manually, see:
+
 - **QUICK_START_ADMIN_INVITE.md** - Step-by-step guide
 - **EDGE_FUNCTION_DEPLOYMENT.md** - Detailed documentation
 
 ## Other Scripts
 
 ### fetch_mvf.mjs
+
 Fetches Mappedin venue data.
 
 ### test_mappedin.js / test_mappedin.mjs
+
 Test scripts for Mappedin integration.
 
 ## Troubleshooting
 
 ### Script won't run
+
 PowerShell execution policy may be blocking the script. Run:
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
 ### Supabase CLI errors
+
 Make sure Node.js and npm are installed:
+
 ```powershell
 node --version
 npm --version
 ```
 
 ### Function deployment fails
+
 Check that you're in the correct directory (`c:\Users\Hannah\Desktop\web`) and that the `supabase/functions/invite-admin` folder exists.
 
 ## Need Help?

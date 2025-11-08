@@ -21,12 +21,14 @@ supabase link --project-ref YOUR_PROJECT_ID
 ```
 
 **To find your Project ID:**
+
 1. Go to https://supabase.com/dashboard
 2. Select your project
 3. Click "Project Settings" (gear icon) in the sidebar
 4. Look for "Reference ID" under "General settings"
 
 You'll be prompted for an Access Token. To get it:
+
 1. Click your profile icon (top right in Supabase Dashboard)
 2. Go to "Access Tokens"
 3. Click "Generate new token"
@@ -42,6 +44,7 @@ supabase functions deploy invite-admin
 ```
 
 You should see output like:
+
 ```
 Deploying invite-admin (project ref: ...)
 Deployed Function invite-admin with image version: ...
@@ -62,6 +65,7 @@ supabase secrets set PUBLIC_SITE_URL=https://your-domain.vercel.app
 ```
 
 **To find these values:**
+
 1. Go to Supabase Dashboard → Project Settings → API
 2. **SUPABASE_URL**: Copy "Project URL"
 3. **SUPABASE_ANON_KEY**: Copy the `anon` `public` key
@@ -86,6 +90,7 @@ If successful, you'll see "Invitation sent successfully!" and the new admin will
 ### Error: "Failed to invite admin"
 
 **Check function logs:**
+
 ```powershell
 supabase functions logs invite-admin --follow
 ```
@@ -107,6 +112,7 @@ Leave this running in PowerShell and try inviting an admin again. You'll see det
 ### Function deployed but not working
 
 Verify the secrets are set:
+
 ```powershell
 supabase secrets list
 ```

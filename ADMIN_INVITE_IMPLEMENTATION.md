@@ -3,11 +3,13 @@
 ## What Was Done
 
 ### 1. Created Supabase Edge Function
+
 **File**: `supabase/functions/invite-admin/index.ts`
 
 This serverside function handles admin invitations securely using the service_role key that can't be exposed in the client-side code.
 
 **Features**:
+
 - Validates the requesting user is an active admin
 - Checks for duplicate emails
 - Creates new user in Supabase Auth
@@ -16,11 +18,13 @@ This serverside function handles admin invitations securely using the service_ro
 - Includes proper error handling and CORS support
 
 ### 2. Updated AdminManagement.tsx
+
 **File**: `src/pages/AdminManagement.tsx`
 
 Changed the `handleInviteAdmin` function to call the Edge Function instead of trying to use admin API directly from the client.
 
 **What changed**:
+
 - Gets current user's session token
 - Makes HTTP POST request to Edge Function
 - Passes email, firstName, and lastName
@@ -28,6 +32,7 @@ Changed the `handleInviteAdmin` function to call the Edge Function instead of tr
 - Shows appropriate user feedback
 
 ### 3. Created Documentation
+
 - **EDGE_FUNCTION_DEPLOYMENT.md**: Comprehensive deployment guide
 - **QUICK_START_ADMIN_INVITE.md**: Step-by-step quick start guide
 - **supabase/functions/.env.example**: Template for environment variables
@@ -35,7 +40,7 @@ Changed the `handleInviteAdmin` function to call the Edge Function instead of tr
 ## How It Works
 
 ```
-User clicks "Invite Admin" 
+User clicks "Invite Admin"
     ↓
 AdminManagement.tsx validates form
     ↓
@@ -115,6 +120,7 @@ After deployment:
 ## Support
 
 If you encounter issues:
+
 - Check function logs: `supabase functions logs invite-admin`
 - Verify environment variables: `supabase secrets list`
 - Review EDGE_FUNCTION_DEPLOYMENT.md troubleshooting section
@@ -123,6 +129,7 @@ If you encounter issues:
 ## Alternative Without Deployment
 
 If you prefer not to deploy the Edge Function, admins can be invited manually through the Supabase Dashboard:
+
 1. Go to Authentication → Users
 2. Click "Invite User"
 3. Enter email address

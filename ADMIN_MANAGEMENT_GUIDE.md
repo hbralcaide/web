@@ -5,9 +5,11 @@
 A complete Admin Management system has been added to your Toril Public Market application.
 
 ### New Files Created:
+
 - `src/pages/AdminManagement.tsx` - Full admin management page
 
 ### Modified Files:
+
 - `src/App.tsx` - Added route for `/admin/admins`
 - `src/layouts/AdminLayout.tsx` - Added "Admins" navigation link
 
@@ -16,17 +18,20 @@ A complete Admin Management system has been added to your Toril Public Market ap
 ## 🎯 Features Included
 
 ### 1. **Admin List View**
+
 - ✅ View all admin users in a table
 - ✅ Search admins by name, email, or username
 - ✅ See admin status (Active/Inactive)
 - ✅ Display creation date and contact info
 
 ### 2. **Statistics Dashboard**
+
 - ✅ Total admins count
 - ✅ Active admins count
 - ✅ Inactive admins count
 
 ### 3. **Invite New Admin**
+
 - ✅ "Invite Admin" button
 - ✅ Modal form with email, first name, last name
 - ✅ Sends invitation email via Supabase Auth
@@ -35,11 +40,13 @@ A complete Admin Management system has been added to your Toril Public Market ap
 - ✅ Success/error messages
 
 ### 4. **Admin Actions**
+
 - ✅ **Deactivate** - Disable admin access (reversible)
 - ✅ **Activate** - Re-enable admin access
 - ✅ **Delete** - Permanently remove admin (with confirmation)
 
 ### 5. **User Experience**
+
 - ✅ Confirmation modals for all destructive actions
 - ✅ Loading states
 - ✅ Error handling
@@ -50,11 +57,13 @@ A complete Admin Management system has been added to your Toril Public Market ap
 ## 📋 How to Use
 
 ### **Access the Admin Management Page:**
+
 1. Login as an admin
 2. Click **"Admins"** in the top navigation
 3. Or navigate to: `http://localhost:5173/admin/admins`
 
 ### **To Invite a New Admin:**
+
 1. Click the **"Invite Admin"** button (top right)
 2. Fill in:
    - Email address
@@ -66,18 +75,21 @@ A complete Admin Management system has been added to your Toril Public Market ap
 6. They're automatically added as an admin!
 
 ### **To Deactivate an Admin:**
+
 1. Find the admin in the table
 2. Click **"Deactivate"** in the Actions column
 3. Confirm in the modal
 4. Status changes to "Inactive"
 
 ### **To Reactivate an Admin:**
+
 1. Find the inactive admin
 2. Click **"Activate"**
 3. Confirm in the modal
 4. Status changes to "Active"
 
 ### **To Delete an Admin:**
+
 1. Find the admin
 2. Click **"Delete"**
 3. Confirm (this is permanent!)
@@ -97,6 +109,7 @@ For the invite feature to work, you need to enable the Admin API in Supabase:
 4. The invite function uses `supabase.auth.admin.inviteUserByEmail()`
 
 ### **Email Template**
+
 Supabase will send an invitation email using your project's email template. To customize it:
 
 1. Go to **Authentication** → **Email Templates**
@@ -104,7 +117,9 @@ Supabase will send an invitation email using your project's email template. To c
 3. Make sure it includes the signup link
 
 ### **Row Level Security (RLS)**
+
 The admin_profiles table should allow:
+
 - ✅ SELECT for authenticated admins
 - ✅ INSERT for authenticated admins (for invites)
 - ✅ UPDATE for authenticated admins
@@ -154,6 +169,7 @@ The admin_profiles table should allow:
 Your Admin Management system is ready to use! Navigate to `/admin/admins` to start managing your admin team.
 
 ### Recommended Actions:
+
 1. Test the invite flow with a test email
 2. Customize the Supabase email template
 3. Set up proper RLS policies if not already configured
@@ -168,15 +184,18 @@ Your Admin Management system is ready to use! Navigate to `/admin/admins` to sta
 ## 🆘 Troubleshooting
 
 **Invite not sending?**
+
 - Check Supabase service_role key is configured
 - Verify email settings in Supabase
 - Check browser console for errors
 
 **Can't delete admin?**
+
 - May need service_role key for auth.admin.deleteUser()
 - Profile will be deleted even if auth deletion fails
 
 **Status not updating?**
+
 - Check RLS policies on admin_profiles table
 - Verify UPDATE permissions
 

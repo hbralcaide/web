@@ -5,6 +5,7 @@ This guide explains how to deploy the `invite-admin` Edge Function to enable adm
 ## Prerequisites
 
 1. **Supabase CLI installed**
+
    ```bash
    npm install -g supabase
    ```
@@ -22,6 +23,7 @@ supabase link --project-ref your-project-id
 ```
 
 You'll be prompted to enter your access token. Get it from:
+
 - Go to Supabase Dashboard
 - Click your profile icon (top right)
 - Settings → Access Tokens
@@ -47,6 +49,7 @@ supabase secrets set PUBLIC_SITE_URL=https://your-domain.com
 ```
 
 **Where to find these values:**
+
 - Go to Supabase Dashboard → Project Settings → API
 - `SUPABASE_URL`: Project URL
 - `SUPABASE_ANON_KEY`: `anon` `public` key
@@ -79,6 +82,7 @@ If successful, you should see a success message and the new admin will appear in
 ### Error: "Failed to invite admin"
 
 **Check:**
+
 1. Edge function is deployed: `supabase functions list`
 2. Environment variables are set: `supabase secrets list`
 3. Service role key is correct
@@ -87,6 +91,7 @@ If successful, you should see a success message and the new admin will appear in
 ### Error: "Network request failed"
 
 **Check:**
+
 1. Your Supabase URL in `src/config/supabaseClient.ts` is correct
 2. CORS is configured (the function includes CORS headers)
 3. Check browser console for detailed error
@@ -94,6 +99,7 @@ If successful, you should see a success message and the new admin will appear in
 ### Error: "Unauthorized"
 
 **Check:**
+
 1. You're logged in as an admin
 2. Your admin status is "active" in the `admin_profiles` table
 3. The authorization header is being sent
@@ -113,6 +119,7 @@ This will show real-time logs when the function is called.
 If you can't deploy the Edge Function right now, admins can still be created manually:
 
 1. **Via Supabase Dashboard:**
+
    - Go to Authentication → Users
    - Click "Invite User"
    - Enter the email address

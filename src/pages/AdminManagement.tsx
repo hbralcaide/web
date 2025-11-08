@@ -47,6 +47,17 @@ export default function AdminManagement() {
         onConfirm: () => {},
         type: 'deactivate'
     })
+    const [notificationModal, setNotificationModal] = useState<{
+        show: boolean
+        title: string
+        message: string
+        type: 'success' | 'error'
+    }>({
+        show: false,
+        title: '',
+        message: '',
+        type: 'success'
+    })
 
     useEffect(() => {
         fetchAdmins()
@@ -131,44 +142,93 @@ export default function AdminManagement() {
 
     const handleStatusChange = async (admin: AdminProfile, newStatus: 'Active' | 'Inactive') => {
         try {
+            console.log('Changing status for admin:', admin.id, 'to:', newStatus)
+            
             // Status in database uses capital first letter: Active or Inactive
             const { error } = await supabase
                 .from('admin_profiles')
                 .update({ status: newStatus })
                 .eq('id', admin.id)
 
-            if (error) throw error
+            if (error) {
+                console.error('Database error:', error)
+                throw error
+            }
+
+            console.log('Status updated successfully')
 
             // Update local state
             setAdmins(admins.map(a => 
                 a.id === admin.id ? { ...a, status: newStatus } : a
             ))
 
-            setConfirmModal({ ...confirmModal, show: false })
-            alert(`Admin ${newStatus === 'Active' ? 'activated' : 'deactivated'} successfully!`)
+            setConfirmModal({ 
+                show: false,
+                title: '',
+                message: '',
+                onConfirm: () => {},
+                type: 'deactivate'
+            })
+            
+            setNotificationModal({
+                show: true,
+                title: 'Success',
+                message: `Admin ${newStatus === 'Active' ? 'activated' : 'deactivated'} successfully!`,
+                type: 'success'
+            })
         } catch (error) {
             console.error('Error updating admin status:', error)
-            alert('Failed to update admin status: ' + (error as any).message)
+            setNotificationModal({
+                show: true,
+                title: 'Error',
+                message: 'Failed to update admin status: ' + (error as any).message,
+                type: 'error'
+            })
         }
     }
 
     const handleDeleteAdmin = async (admin: AdminProfile) => {
         try {
+            console.log('Deleting admin:', admin.id)
+            
             // Delete admin profile (auth user will remain but can't access admin panel)
             const { error } = await supabase
                 .from('admin_profiles')
                 .delete()
                 .eq('id', admin.id)
 
-            if (error) throw error
+            if (error) {
+                console.error('Database error:', error)
+                throw error
+            }
+
+            console.log('Admin deleted successfully')
 
             // Update local state
             setAdmins(admins.filter(a => a.id !== admin.id))
-            setConfirmModal({ ...confirmModal, show: false })
-            alert('Admin deleted successfully!')
+            
+            setConfirmModal({ 
+                show: false,
+                title: '',
+                message: '',
+                onConfirm: () => {},
+                type: 'deactivate'
+            })
+            
+            setNotificationModal({
+                show: true,
+                title: 'Success',
+                message: 'Admin deleted successfully!',
+                type: 'success'
+            })
         } catch (error) {
             console.error('Error deleting admin:', error)
-            alert('Failed to delete admin: ' + (error as any).message)
+            setNotificationModal({
+                show: true,
+                title: 'Error',
+                message: 'Failed to delete admin: ' + (error as any).message,
+                type: 'error'
+            })
         }
     }
 
@@ -517,6 +577,49 @@ export default function AdminManagement() {
                                 }`}
                             >
                                 {confirmModal.type === 'delete' ? 'Delete' : confirmModal.type === 'deactivate' ? 'Deactivate' : 'Activate'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Notification Modal */}
+            {notificationModal.show && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="flex items-start mb-4">
+                            {notificationModal.type === 'success' ? (
+                                <div className="flex-shrink-0">
+                                    <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            ) : (
+                                <div className="flex-shrink-0">
+                                    <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            )}
+                            <div className="ml-3 flex-1">
+                                <h3 className={`text-lg font-bold ${notificationModal.type === 'success' ? 'text-green-900' : 'text-red-900'}`}>
+                                    {notificationModal.title}
+                                </h3>
+                                <p className="mt-1 text-sm text-gray-600">
+                                    {notificationModal.message}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => setNotificationModal({ ...notificationModal, show: false })}
+                                className={`px-4 py-2 rounded-lg text-white transition-colors ${
+                                    notificationModal.type === 'success' 
+                                        ? 'bg-green-600 hover:bg-green-700' 
+                                        : 'bg-red-600 hover:bg-red-700'
+                                }`}
+                            >
+                                OK
                             </button>
                         </div>
                     </div>

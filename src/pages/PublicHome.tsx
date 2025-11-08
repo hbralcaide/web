@@ -12,19 +12,11 @@ interface SectionWithStalls extends MarketSection {
     availableStalls: number
 }
 
-interface RaffleWinner {
-    stall_number: string
-    first_name: string
-    last_name: string
-    business_name: string
-}
-
 export default function PublicHome() {
     const [sections, setSections] = useState<SectionWithStalls[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [selectedSectionCode, setSelectedSectionCode] = useState<string | null>(null)
-    const [raffleWinners, setRaffleWinners] = useState<RaffleWinner[]>([])
 
     useEffect(() => {
         fetchMarketData()
@@ -54,20 +46,6 @@ export default function PublicHome() {
 
             if (stallsError) {
                 throw stallsError
-            }
-
-            // Fetch raffle winners
-            const { data: winnersData, error: winnersError } = await supabase
-                .from('vendor_applications')
-                .select('assigned_stall_number, first_name, last_name, business_name')
-                .eq('status', 'won_raffle')
-                .not('assigned_stall_number', 'is', null)
-                .order('assigned_stall_number')
-
-            if (winnersError) {
-                console.error('Error fetching raffle winners:', winnersError)
-            } else {
-                setRaffleWinners(winnersData || [])
             }
 
             // Group stalls by section and calculate available stalls

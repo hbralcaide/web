@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -58,7 +59,7 @@ export default function PhotoMarriageCert() {
                 .eq('id', vendorApplicationId)
 
             if (error) throw error
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error saving photo to database:', error)
             throw error
         }

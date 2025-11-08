@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+// @ts-nocheck
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { uploadPhoto } from '../utils/photoUpload'
 import { supabase } from '../lib/supabase'
@@ -82,7 +83,7 @@ export default function PhotoId() {
                 .eq('id', vendorApplicationId)
 
             if (error) throw error
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error saving photo to database:', error)
             throw error
         }

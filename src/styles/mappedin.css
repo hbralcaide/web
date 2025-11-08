@@ -3,3 +3,37 @@
 .mappedin-marker{font-family:InterUI-Regular,Helvetica,Arial,sans-serif;font-weight:400;top:0;position:absolute;font-weight:700;color:#000;display:flex;flex-direction:row;will-change:transform,opacity;transition:opacity .15s ease-in-out;justify-content:center;opacity:0}.mappedin-marker[data-placement=hidden]>.mappedin-marker-content{visibility:hidden}.mappedin-marker:before{content:"";display:none;border-radius:50%;position:relative;width:var(--mappedin-pin-size, 2px);height:var(--mappedin-pin-size, 2px);background-color:var(--pin-color, #666)}.mappedin-marker[data-placement=hidden]:before{display:block}.mappedin__smart-collision-engine__container{position:absolute;inset:0;pointer-events:none;transform-style:preserve-3d;font-family:InterUI-Regular,Helvetica,Arial,sans-serif} 
 /* ... include ALL the CSS text you already have ... */
 /* end */
+
+/* Ensure Mappedin native controls are visible */
+.maplibregl-ctrl-group,
+.mapboxgl-ctrl-group,
+.maplibregl-ctrl,
+.mapboxgl-ctrl {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.maplibregl-ctrl-top-right,
+.mapboxgl-ctrl-top-right {
+  top: 10px;
+  right: 10px;
+  position: absolute;
+}
+
+.maplibregl-ctrl-compass,
+.mapboxgl-ctrl-compass,
+.maplibregl-ctrl-zoom-in,
+.maplibregl-ctrl-zoom-out,
+.mapboxgl-ctrl-zoom-in,
+.mapboxgl-ctrl-zoom-out {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Override Mappedin's pointer cursor on interactive elements */
+.maplibregl-canvas,
+.mapboxgl-canvas,
+.mappedin-map canvas {
+  cursor: default !important;
+}

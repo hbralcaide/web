@@ -848,261 +848,274 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
   const section = getSection();
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-4 mx-auto p-6 border-0 w-11/12 max-w-6xl shadow-2xl rounded-2xl bg-white">
-        <div className="">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
-            <div className="flex items-center">
-              <div className="bg-indigo-100 rounded-full p-3 mr-4">
-                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+      <div className="relative w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-3">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-3xl font-bold text-gray-900">
+                <h3 className="text-2xl font-bold text-white">
                   {isEditing ? 'Edit Vendor Details' : 'Vendor Details'}
                 </h3>
-                <p className="text-lg text-gray-600 mt-1">
-                  {vendor.first_name} {vendor.last_name} - {vendor.username}
+                <p className="text-indigo-100 mt-1">
+                  {vendor.first_name} {vendor.last_name} • {vendor.username}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </button>
-              ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-                  >
-                    {saving ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Changes'
-                    )}
-                  </button>
-                </div>
-              )}
+            <button
+              onClick={onClose}
+              className="text-white hover:text-indigo-200 transition-colors p-2 hover:bg-white hover:bg-opacity-10 rounded-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="bg-gray-50 px-8 py-4 border-b border-gray-200 flex justify-end">
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-sm hover:shadow-md"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Details
+            </button>
+          ) : (
+            <div className="flex gap-3">
               <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                onClick={() => setIsEditing(false)}
+                className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
+              >
+                {saving ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving Changes...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Changes
+                  </>
+                )}
               </button>
             </div>
-          </div>
+          )}
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Personal & Contact Information */}
-            <div className="space-y-6">
+        {/* Content */}
+        <div className="px-8 py-6 overflow-y-auto max-h-[calc(100vh-280px)]">
+          <div className="space-y-5">
               {/* Personal Information */}
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
-                <div className="flex items-center mb-4">
-                  <div className="bg-green-100 rounded-full p-2 mr-3">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <div className="flex items-center mb-5 pb-3 border-b border-gray-100">
+                  <div className="bg-indigo-50 rounded-lg p-2.5 mr-3">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
-                  <h4 className="text-xl font-bold text-green-800">Personal Information</h4>
+                  <h4 className="text-lg font-semibold text-gray-900">Personal Information</h4>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">First Name</label>
                     {isEditing ? (
                       <input
                         type="text"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 ${errors.first_name ? 'border-red-400' : 'border-gray-300'}`}
+                        className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.first_name ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'}`}
+                        placeholder="Enter first name"
                       />
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.first_name}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5">{vendor.first_name}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Last Name</label>
                     {isEditing ? (
                       <input
                         type="text"
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 ${errors.last_name ? 'border-red-400' : 'border-gray-300'}`}
+                        className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.last_name ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'}`}
+                        placeholder="Enter last name"
                       />
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.last_name}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5">{vendor.last_name}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Middle Initial</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Middle Initial</label>
                     {isEditing ? (
                       <input
                         type="text"
                         value={formData.middle_name}
                         onChange={(e) => setFormData({ ...formData, middle_name: e.target.value.slice(0, 1).toUpperCase() })}
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 text-center"
+                        className="w-full px-3 py-2.5 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center transition-all"
                         maxLength={1}
+                        placeholder="M"
                       />
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.middle_name || 'N/A'}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5">{vendor.middle_name || '—'}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Username</label>
                     {isEditing ? (
                       <input
                         type="text"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 font-mono ${errors.username ? 'border-red-400' : 'border-gray-300'}`}
+                        className={`w-full px-3 py-2.5 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.username ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'}`}
+                        placeholder="username"
                       />
                     ) : (
-                      <p className="text-lg font-mono font-medium text-gray-900 py-2 bg-gray-50 px-3 rounded">{vendor.username}</p>
+                      <p className="text-sm font-mono font-medium text-gray-900 py-2.5 bg-gray-50 px-3 rounded border border-gray-200">{vendor.username}</p>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Contact Information */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
-                <div className="flex items-center mb-4">
-                  <div className="bg-blue-100 rounded-full p-2 mr-3">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <div className="flex items-center mb-5 pb-3 border-b border-gray-100">
+                  <div className="bg-indigo-50 rounded-lg p-2.5 mr-3">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <h4 className="text-xl font-bold text-blue-800">Contact Information</h4>
+                  <h4 className="text-lg font-semibold text-gray-900">Contact Information</h4>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Email</label>
                     {isEditing ? (
                       <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500"
+                        className="w-full px-3 py-2.5 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                         placeholder="vendor@example.com"
                       />
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.email || 'Not provided'}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5">{vendor.email || '—'}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Phone Number</label>
                     {isEditing ? (
-                      <div className="flex">
-                        <div className="flex items-center bg-gray-200 px-3 rounded-l-lg">
-                          <span className="text-gray-600">+63</span>
+                      <div className="flex rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500">
+                        <div className="flex items-center bg-gray-50 px-3 border-r border-gray-300">
+                          <span className="text-sm font-medium text-gray-600">+63</span>
                         </div>
-                        <div className="flex-grow flex items-center border-t-2 border-b-2 border-gray-300 px-2">
-                          <span className="text-gray-700">9</span>
+                        <div className="flex items-center px-2 bg-gray-50 border-r border-gray-300">
+                          <span className="text-sm font-medium text-gray-700">9</span>
                         </div>
                         <input
                           type="tel"
                           value={formData.phone_number}
                           onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                          className={`flex-grow px-3 py-2 border-2 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 ${errors.phone_number ? 'border-red-400' : ''}`}
+                          className={`flex-grow px-3 py-2.5 text-sm border-0 focus:ring-0 focus:outline-none ${errors.phone_number ? 'bg-red-50' : 'bg-white'}`}
                           placeholder="XXXXXXXX"
                         />
                       </div>
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">
-                        {vendor.phone_number ? `+63 ${vendor.phone_number}` : 'Not provided'}
+                      <p className="text-sm font-medium text-gray-900 py-2.5">
+                        {vendor.phone_number ? `+63 9${vendor.phone_number}` : '—'}
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Complete Address</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Complete Address</label>
                     {isEditing ? (
                       <textarea
                         value={formData.complete_address}
                         onChange={(e) => setFormData({ ...formData, complete_address: e.target.value })}
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500"
+                        className="w-full px-3 py-2.5 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
                         rows={3}
                         placeholder="Enter complete address"
                       />
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.complete_address || 'Not provided'}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5 whitespace-pre-wrap">{vendor.complete_address || '—'}</p>
                     )}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Right Column - Business & Stall Information */}
-            <div className="space-y-6">
+              
               {/* Business Information */}
-              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl p-6 border-2 border-orange-200">
-                <div className="flex items-center mb-4">
-                  <div className="bg-orange-100 rounded-full p-2 mr-3">
-                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <div className="flex items-center mb-5 pb-3 border-b border-gray-100">
+                  <div className="bg-indigo-50 rounded-lg p-2.5 mr-3">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
-                  <h4 className="text-xl font-bold text-orange-800">Business Information</h4>
+                  <h4 className="text-lg font-semibold text-gray-900">Business Information</h4>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Business Name</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Business Name</label>
                     {isEditing ? (
                       <>
                         <input
                           type="text"
                           value={formData.business_name}
                           onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                          className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-300 focus:border-orange-500 ${errors.business_name ? 'border-red-400' : 'border-gray-300'}`}
+                          className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.business_name ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'}`}
                           placeholder="Enter business name"
                         />
                         {errors.business_name && (
-                          <p className="text-red-500 text-sm mt-1">{errors.business_name}</p>
+                          <p className="text-red-600 text-xs mt-1.5 flex items-center">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            {errors.business_name}
+                          </p>
                         )}
                       </>
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.business_name || 'Not provided'}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5">{vendor.business_name || '—'}</p>
                     )}
                   </div>
 
-
-
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Status</label>
                     {isEditing ? (
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-300 focus:border-orange-500"
+                        className="w-full px-3 py-2.5 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                       >
                         <option value="Pending">Pending</option>
                         <option value="Active">Active</option>
@@ -1110,12 +1123,13 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                         <option value="Suspended">Suspended</option>
                       </select>
                     ) : (
-                      <div className="flex items-center py-2">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${vendor.status === 'Active' ? 'bg-green-100 text-green-800' :
-                            vendor.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                              vendor.status === 'Inactive' ? 'bg-gray-100 text-gray-800' :
-                                'bg-red-100 text-red-800'
-                          }`}>
+                      <div className="py-2.5">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                          vendor.status === 'Active' ? 'bg-green-100 text-green-800' :
+                          vendor.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                          vendor.status === 'Inactive' ? 'bg-gray-100 text-gray-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
                           {vendor.status}
                         </span>
                       </div>
@@ -1123,98 +1137,102 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Products/Services Description</label>
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Products/Services Description</label>
                     {isEditing ? (
                       <textarea
                         value={formData.products_services_description}
                         onChange={(e) => setFormData({ ...formData, products_services_description: e.target.value })}
-                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-300 focus:border-orange-500"
+                        className="w-full px-3 py-2.5 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
                         rows={3}
                         placeholder="Describe products or services"
                       />
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.products_services_description || 'Not provided'}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5 whitespace-pre-wrap">{vendor.products_services_description || '—'}</p>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Stall Assignment */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200">
-                <div className="flex items-center mb-4">
-                  <div className="bg-purple-100 rounded-full p-2 mr-3">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <div className="flex items-center mb-5 pb-3 border-b border-gray-100">
+                  <div className="bg-indigo-50 rounded-lg p-2.5 mr-3">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <h4 className="text-xl font-bold text-purple-800">Stall Assignment</h4>
+                  <h4 className="text-lg font-semibold text-gray-900">Stall Assignment</h4>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Assigned Stall</label>
-                    <p className="text-lg font-medium text-gray-900 py-2">
-                      {assignedStall ? assignedStall.stall_number : vendor.stall_number || 'No stall assigned'}
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Assigned Stall</label>
+                    <p className="text-sm font-medium text-gray-900 py-2.5 bg-gray-50 px-3 rounded border border-gray-200">
+                      {assignedStall ? assignedStall.stall_number : vendor.stall_number || '—'}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Section</label>
-                    <p className="text-lg font-medium text-gray-900 py-2">
-                      {section ? section.name : 'No section assigned'}
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Section</label>
+                    <p className="text-sm font-medium text-gray-900 py-2.5">
+                      {section ? section.name : '—'}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Application Status</label>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${vendor.application_status === 'approved' ? 'bg-green-100 text-green-800' :
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">Application Status</label>
+                    <div className="py-2.5">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        vendor.application_status === 'approved' ? 'bg-green-100 text-green-800' :
                         vendor.application_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                        'bg-red-100 text-red-800'
                       }`}>
-                      {vendor.application_status}
-                    </span>
+                        {vendor.application_status}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Actual Occupant Information Section */}
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="bg-purple-100 rounded-full p-2 mr-3">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 005.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 919.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+          {/* Actual Occupant Information Section - Only show if editing OR if there's data */}
+          {(isEditing || vendor.actual_occupant_first_name || vendor.actual_occupant_last_name) && (
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="bg-indigo-100 rounded-lg p-2 mr-3">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 005.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900">Actual Occupant Information</h4>
+                    <p className="text-xs text-gray-600 mt-0.5">If different from the registered vendor</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-xl font-bold text-purple-800">Actual Occupant Information</h4>
-                  <p className="text-sm text-purple-600">If different from the registered vendor above</p>
-                </div>
-              </div>
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showActualOccupant}
-                  onChange={(e) => setShowActualOccupant(e.target.checked)}
-                  className="sr-only"
-                />
-                <div className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${showActualOccupant ? 'bg-purple-600' : 'bg-gray-300'}`}>
-                  <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${showActualOccupant ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                </div>
-                <span className="ml-3 text-sm font-medium text-gray-700">
-                  {showActualOccupant ? 'Hide' : 'Show'} Details
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showActualOccupant}
+                    onChange={(e) => setShowActualOccupant(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${showActualOccupant ? 'bg-indigo-600' : 'bg-gray-300'}`}>
+                    <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${showActualOccupant ? 'translate-x-5' : 'translate-x-0'} shadow-sm`}></div>
+                  </div>
+                  <span className="ml-3 text-sm font-medium text-gray-700">
+                    {showActualOccupant ? 'Hide' : 'Show'}
                 </span>
               </label>
             </div>
+            </div>
 
             {showActualOccupant && (
-              <>
+              <div className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-base font-semibold text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
                       Actual Occupant First Name
                     </label>
                     {isEditing ? (
@@ -1225,17 +1243,17 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                           const capitalizedName = capitalizeName(e.target.value);
                           setFormData({ ...formData, actual_occupant_first_name: capitalizedName });
                         }}
-                        className="w-full px-3 py-3 text-base border-2 border-gray-300 bg-white rounded-xl focus:ring-3 focus:ring-purple-300 focus:border-purple-500 transition-all duration-200"
+                        className="w-full px-3 py-2.5 text-sm border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                         placeholder="e.g., Maria"
                       />
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.actual_occupant_first_name}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5">{vendor.actual_occupant_first_name || '—'}</p>
                     )}
-                    <p className="text-sm text-gray-500 mt-1">Leave empty if same as registered vendor</p>
+                    <p className="text-xs text-gray-500 mt-1">Leave empty if same as registered vendor</p>
                   </div>
 
                   <div>
-                    <label className="block text-base font-semibold text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
                       Actual Occupant Last Name
                     </label>
                     {isEditing ? (
@@ -1246,17 +1264,17 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                           const capitalizedName = capitalizeName(e.target.value);
                           setFormData({ ...formData, actual_occupant_last_name: capitalizedName });
                         }}
-                        className="w-full px-3 py-3 text-base border-2 border-gray-300 bg-white rounded-xl focus:ring-3 focus:ring-purple-300 focus:border-purple-500 transition-all duration-200"
+                        className="w-full px-3 py-2.5 text-sm border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                         placeholder="e.g., Santos"
                       />
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">{vendor.actual_occupant_last_name}</p>
+                      <p className="text-sm font-medium text-gray-900 py-2.5">{vendor.actual_occupant_last_name || '—'}</p>
                     )}
-                    <p className="text-sm text-gray-500 mt-1">Leave empty if same as registered vendor</p>
+                    <p className="text-xs text-gray-500 mt-1">Leave empty if same as registered vendor</p>
                   </div>
 
                   <div>
-                    <label className="block text-base font-semibold text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
                       Actual Occupant Username
                     </label>
                     {isEditing ? (
@@ -1265,21 +1283,21 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                           type="text"
                           value={formData.actual_occupant_username}
                           onChange={(e) => setFormData({ ...formData, actual_occupant_username: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '') })}
-                          className="w-full px-3 py-3 text-base border-2 border-gray-300 bg-gray-50 rounded-xl focus:ring-3 focus:ring-purple-300 focus:border-purple-500 transition-all duration-200 font-mono"
+                          className="w-full px-3 py-2.5 pr-10 text-sm border border-gray-300 bg-gray-50 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-mono"
                           placeholder="Auto-generated from name"
                           readOnly
                         />
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-lg font-mono font-medium text-gray-900 py-2 bg-gray-50 px-3 rounded">{vendor.actual_occupant_username}</p>
+                      <p className="text-sm font-mono font-medium text-gray-900 py-2.5 bg-gray-50 px-3 rounded border border-gray-200">{vendor.actual_occupant_username || '—'}</p>
                     )}
-                    <p className="text-sm text-gray-500 mt-1 flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <p className="text-xs text-gray-500 mt-1 flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       Generated automatically, unique from vendor username
@@ -1287,66 +1305,75 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-base font-semibold text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
                       Actual Occupant Phone
                     </label>
                     {isEditing ? (
-                      <div className="relative">
-                        <div className="flex w-full">
-                          <div className="rounded-xl border-2 border-gray-300 overflow-hidden flex w-full">
-                            <div className="bg-white py-3 px-4 flex items-center border-r border-gray-300">
-                              <span className="text-gray-500 text-base whitespace-nowrap">+63</span>
-                            </div>
-                            <div className="bg-white flex-1 py-3 pl-2 pr-4 flex items-center">
-                              <span className="text-gray-800 text-base mr-1">9</span>
-                              <input
-                                type="text"
-                                value={formData.actual_occupant_phone}
-                                onChange={(e) => {
-                                  // Only allow digits and limit to 8 digits (excluding the displayed 9 prefix)
-                                  const value = e.target.value;
-                                  const digits = value.replace(/\D/g, '');
-                                  setFormData({ ...formData, actual_occupant_phone: digits.substring(0, 8) });
-                                }}
-                                className="w-full border-none p-0 m-0 focus:ring-0 focus:outline-none bg-transparent"
-                                placeholder="12345678"
-                                maxLength={8}
-                              />
-                            </div>
+                      <>
+                        <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500">
+                          <div className="bg-gray-50 py-2.5 px-3 flex items-center border-r border-gray-300">
+                            <span className="text-sm font-medium text-gray-600">+63</span>
                           </div>
+                          <div className="bg-gray-50 flex items-center px-2 border-r border-gray-300">
+                            <span className="text-sm font-medium text-gray-700">9</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={formData.actual_occupant_phone}
+                            onChange={(e) => {
+                              // Only allow digits and limit to 8 digits (excluding the displayed 9 prefix)
+                              const value = e.target.value;
+                              const digits = value.replace(/\D/g, '');
+                              setFormData({ ...formData, actual_occupant_phone: digits.substring(0, 8) });
+                            }}
+                            className="flex-grow px-3 py-2.5 text-sm border-0 focus:ring-0 focus:outline-none bg-white"
+                            placeholder="12345678"
+                            maxLength={8}
+                          />
                         </div>
-                        <p className="text-sm text-gray-500 mt-2">Enter 8 digits after +63 9 (e.g., 12345678)</p>
-                      </div>
+                        <p className="text-xs text-gray-500 mt-1.5">Enter 8 digits after +63 9 (e.g., 12345678)</p>
+                      </>
                     ) : (
-                      <p className="text-lg font-medium text-gray-900 py-2">
+                      <p className="text-sm font-medium text-gray-900 py-2.5">
                         {vendor.actual_occupant_phone ? 
                           (vendor.actual_occupant_phone.startsWith('9') ? 
                             `+63 ${vendor.actual_occupant_phone}` : 
                             vendor.actual_occupant_phone) : 
-                          'Not provided'}
+                          '—'}
                       </p>
                     )}
-                    <p className="text-sm text-gray-500 mt-1">Contact number for actual occupant</p>
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
+          )}
 
           {/* Metadata */}
-          <div className="mt-6 bg-gray-50 rounded-xl p-6 border border-gray-200">
-            <h4 className="text-lg font-bold text-gray-800 mb-4">System Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div className="flex items-center mb-4 pb-3 border-b border-gray-100">
+              <div className="bg-indigo-50 rounded-lg p-2 mr-3">
+                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-semibold text-gray-900">System Information</h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <span className="font-semibold">Created:</span> {new Date(vendor.created_at).toLocaleDateString()}
+                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Created</p>
+                <p className="text-sm font-medium text-gray-900">{new Date(vendor.created_at).toLocaleDateString()}</p>
               </div>
               <div>
-                <span className="font-semibold">Last Updated:</span> {new Date(vendor.updated_at).toLocaleDateString()}
+                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Last Updated</p>
+                <p className="text-sm font-medium text-gray-900">{new Date(vendor.updated_at).toLocaleDateString()}</p>
               </div>
               <div>
-                <span className="font-semibold">Signup Method:</span> {vendor.signup_method || 'N/A'}
+                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Signup Method</p>
+                <p className="text-sm font-medium text-gray-900">{vendor.signup_method || '—'}</p>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -2209,11 +2236,40 @@ export default function ExistingVendors() {
   
   // Selected vendors state
   const [selectedVendors, setSelectedVendors] = useState<Set<string>>(new Set());
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
     fetchVendors();
     fetchSections();
     fetchStalls();
+
+    // Set up real-time subscriptions
+    const vendorsChannel = supabase
+      .channel('vendors-realtime')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'vendor_profiles' },
+        (payload) => {
+          console.log('Vendor profile change detected:', payload);
+          fetchVendors();
+        }
+      )
+      .subscribe();
+
+    const stallsChannel = supabase
+      .channel('stalls-vendor-realtime')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stalls' },
+        (payload) => {
+          console.log('Stall change detected:', payload);
+          fetchStalls(); // Refresh stall assignments
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(vendorsChannel);
+      supabase.removeChannel(stallsChannel);
+    };
   }, []);
 
   const fetchVendors = async () => {
@@ -2230,6 +2286,7 @@ export default function ExistingVendors() {
       }
 
       setVendors(data || []);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error('Error fetching vendors:', error);
     } finally {
@@ -3040,6 +3097,16 @@ export default function ExistingVendors() {
           <p className="mt-2 text-sm text-gray-700">
             Manage current vendor accounts, stall assignments, and credentials
           </p>
+          <div className="mt-2 flex items-center text-xs text-gray-500">
+            <div className="flex-shrink-0 h-2 w-2 rounded-full bg-green-500 animate-pulse mr-2"></div>
+            Real-time updates enabled • Last updated: {lastUpdated.toLocaleTimeString()}
+            <button
+              onClick={() => fetchVendors()}
+              className="ml-2 text-blue-600 hover:text-blue-800 font-medium"
+            >
+              ↻ Refresh
+            </button>
+          </div>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <button

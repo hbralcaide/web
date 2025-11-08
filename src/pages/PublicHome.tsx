@@ -16,6 +16,7 @@ export default function PublicHome() {
     const [sections, setSections] = useState<SectionWithStalls[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [selectedSectionCode, setSelectedSectionCode] = useState<string | null>(null)
 
     useEffect(() => {
         fetchMarketData()
@@ -126,19 +127,19 @@ export default function PublicHome() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {/* Government-style Header */}
+            {/* Header */}
             <header className="bg-gray-800 text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center py-4">
                         {/* Logo */}
                         <div className="flex items-center">
                             <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
-                                <span className="text-white font-bold text-lg">M</span>
+                                <span className="text-white font-bold text-lg">TPM</span>
                             </div>
                             <div>
-                                <div className="text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
-                                <div className="text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
-                                <div className="text-xs">TORIL PUBLIC MARKET - MAPALENGKE</div>
+                                <div className="text-lg font-bold">CITY ECONOMICS ENTERPRISE</div>
+                                <div className="text-sm font-semibold">TORIL PUBLIC MARKET (TPM)</div>
+                                <div className="text-xs">Toril Pob., Toril, Davao City, 8000 Philippines</div>
                             </div>
                         </div>
 
@@ -154,6 +155,15 @@ export default function PublicHome() {
                     </div>
                 </div>
             </header>
+
+            {/* Thesis Disclaimer */}
+            <div className="bg-yellow-100 border-b-2 border-yellow-400">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+                    <p className="text-center text-sm text-yellow-900">
+                        <strong>⚠️ NOTICE:</strong> This is an academic thesis project for research purposes and is NOT an official government website.
+                    </p>
+                </div>
+            </div>
 
             {/* Secondary Header */}
             <div className="bg-gray-700 text-white py-2">
@@ -195,17 +205,17 @@ export default function PublicHome() {
                         </div>
                     </div>
 
-                    {/* Official Vendor Application Notice */}
+                    {/* Vendor Application Notice */}
                     <div className="bg-white border-2 border-gray-400 rounded-lg shadow-lg mb-8">
                         <div className="bg-gray-800 text-white p-4 rounded-t-lg">
                             <h3 className="text-xl font-bold text-center">VENDOR APPLICATION PROCESS</h3>
-                            <p className="text-sm text-center text-gray-300">Department of Trade and Industry - Toril Public Market</p>
+                            <p className="text-sm text-center text-gray-300">Toril Public Market</p>
                         </div>
                         <div className="p-8">
                             <div className="text-center mb-6">
                                 <h2 className="text-2xl font-bold text-gray-900 mb-4">APPLY FOR A MARKET STALL</h2>
                                 <p className="text-lg text-gray-700 mb-6">
-                                    The Department of Trade and Industry invites qualified individuals to apply for available market stalls at Toril Public Market.
+                                    Toril Public Market invites qualified individuals to apply for available market stalls.
                                     Currently, <strong>{totalAvailableStalls} stalls</strong> are available across <strong>{sections.length} market sections</strong>.
                                 </p>
                             </div>
@@ -248,8 +258,9 @@ export default function PublicHome() {
                             <div className="bg-gray-50 border border-gray-300 p-4 rounded-lg text-center">
                                 <p className="text-gray-700">
                                     <strong>For inquiries and assistance:</strong><br />
-                                    Contact the Market Administration Office at <strong>(123) 456-7890</strong><br />
-                                    Email: <strong>admin@mapalengke.com</strong>
+                                    Contact the Market Administration Office at <strong>0999 880 6475</strong><br />
+                                    Tel. No.: <strong>(082) 3159348</strong><br />
+                                    Email: <strong>tpm.gov.22@gmail.com</strong>
                                 </p>
                             </div>
                         </div>
@@ -266,9 +277,9 @@ export default function PublicHome() {
                         
                         {/* Map Legend */}
                         <div className="bg-green-50 border-b-2 border-green-200 p-4">
-                            <div className="max-w-3xl mx-auto">
+                            <div className="max-w-5xl mx-auto">
                                 <h4 className="text-center font-bold text-green-900 mb-3">MAP LEGEND</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div className="flex items-center justify-center gap-3 bg-white p-3 rounded-lg border border-green-300">
                                         <div className="w-8 h-8 rounded" style={{backgroundColor: '#10B981'}}></div>
                                         <span className="font-semibold text-green-900">AVAILABLE - Click to Apply</span>
@@ -278,6 +289,58 @@ export default function PublicHome() {
                                         <span className="font-semibold text-gray-700">OCCUPIED - Not Available</span>
                                     </div>
                                 </div>
+                                
+                                {/* Vacant Stalls by Section Indicator */}
+                                <div className="bg-white border border-green-300 rounded-lg p-4 mt-4">
+                                    <h5 className="text-center font-bold text-gray-800 mb-2">AVAILABLE STALLS BY SECTION</h5>
+                                    <p className="text-center text-xs text-gray-600 mb-3">
+                                        Click on a section to highlight it on the map
+                                    </p>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {sections.filter(s => s.availableStalls > 0).map((section) => (
+                                            <button
+                                                key={section.id}
+                                                onClick={() => {
+                                                    // Toggle selection: if already selected, deselect it
+                                                    if (selectedSectionCode === section.code) {
+                                                        setSelectedSectionCode(null);
+                                                    } else {
+                                                        setSelectedSectionCode(section.code);
+                                                    }
+                                                }}
+                                                className={`
+                                                    rounded-lg p-3 text-center transition-all duration-200 cursor-pointer
+                                                    ${selectedSectionCode === section.code 
+                                                        ? 'bg-green-500 border-2 border-green-700 shadow-lg transform scale-105' 
+                                                        : 'bg-green-50 border border-green-200 hover:bg-green-100 hover:shadow-md'
+                                                    }
+                                                `}
+                                            >
+                                                <div className={`text-2xl font-bold mb-1 ${
+                                                    selectedSectionCode === section.code ? 'text-white' : 'text-green-700'
+                                                }`}>
+                                                    {section.availableStalls}
+                                                </div>
+                                                <div className={`text-xs font-semibold ${
+                                                    selectedSectionCode === section.code ? 'text-white' : 'text-gray-700'
+                                                }`}>
+                                                    {section.name}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {selectedSectionCode && (
+                                        <div className="text-center mt-3">
+                                            <button
+                                                onClick={() => setSelectedSectionCode(null)}
+                                                className="text-sm text-gray-600 hover:text-gray-800 underline"
+                                            >
+                                                Clear filter
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                
                                 <p className="text-center text-sm text-green-800 mt-3 font-medium">
                                     🖱️ Click any <span className="text-green-600 font-bold">GREEN stall</span> on the map to start your application
                                 </p>
@@ -288,6 +351,8 @@ export default function PublicHome() {
                             <MappedinMap 
                                 stalls={sections.flatMap(s => s.stalls)}
                                 colorMode="simple"
+                                showStallLabels={true}
+                                highlightedSectionCode={selectedSectionCode}
                                 onStallClick={(stall) => {
                                     if (stall.status === 'vacant' || stall.status === 'available') {
                                         window.location.href = `/vendor-application?stall=${stall.id}`;
@@ -297,122 +362,27 @@ export default function PublicHome() {
                         </div>
                     </div>
 
-                    {/* Official Market Sections Directory */}
-                    <div className="bg-white border-2 border-gray-400 rounded-lg shadow-lg">
-                        <div className="bg-gray-800 text-white p-4 rounded-t-lg">
-                            <h3 className="text-xl font-bold text-center">MARKET SECTIONS DIRECTORY</h3>
-                            <p className="text-sm text-center text-gray-300">Select a specific stall number to begin your application</p>
-                        </div>
-
-                        <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {sections.filter(section => section.availableStalls > 0).map((section) => (
-                                    <div key={section.id} className="bg-gray-50 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                                        {/* Section Header */}
-                                        <div className="bg-gray-700 text-white p-4 rounded-t-lg">
-                                            <h4 className="text-lg font-bold text-center">{section.name.toUpperCase()}</h4>
-                                            <p className="text-sm text-center text-gray-300 mt-1">{section.description}</p>
-                                        </div>
-
-                                        <div className="p-4">
-                                            {/* Available Stalls Count */}
-                                            <div className="text-center mb-4">
-                                                <div className="text-3xl font-bold text-green-600 mb-1">{section.availableStalls}</div>
-                                                <div className="text-gray-700 font-semibold">AVAILABLE STALLS</div>
-                                                <div className="text-gray-500 text-sm">out of {section.stalls.length} total</div>
-                                            </div>
-
-                                            {/* Action Buttons */}
-                                            {section.availableStalls > 0 ? (
-                                                <div className="space-y-3">
-                                                    <div className="text-center mb-3">
-                                                        <p className="text-sm text-gray-600 font-medium">
-                                                            ⚠️ You must select a specific stall number first
-                                                        </p>
-                                                    </div>
-
-                                                    <button
-                                                        onClick={() => {
-                                                            const stallsContainer = document.getElementById(`stalls-${section.id}`);
-                                                            if (stallsContainer) {
-                                                                stallsContainer.classList.toggle('hidden');
-                                                            }
-                                                        }}
-                                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
-                                                    >
-                                                        SELECT STALL NUMBER
-                                                    </button>
-
-                                                    <div className="text-center">
-                                                        <p className="text-xs text-gray-500">
-                                                            Click above to see available stall numbers
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-4">
-                                                    <div className="text-gray-500 font-semibold">NO STALLS AVAILABLE</div>
-                                                    <div className="text-gray-400 text-sm">Please check back later</div>
-                                                </div>
-                                            )}
-
-                                            {/* Stalls List - Collapsible */}
-                                            <div id={`stalls-${section.id}`} className="hidden mt-4">
-                                                <div className="border-t border-gray-300 pt-4">
-                                                    <h5 className="text-sm font-semibold text-gray-700 mb-3 text-center">AVAILABLE STALL NUMBERS:</h5>
-                                                    <p className="text-xs text-gray-600 text-center mb-3">
-                                                        Click on any stall number below to start your application
-                                                    </p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        {section.stalls
-                                                            .filter(stall => stall.status === 'vacant' || stall.status === 'available')
-                                                            .map((stall) => (
-                                                                <button
-                                                                    key={stall.id}
-                                                                    onClick={() => {
-                                                                        window.location.href = `/vendor-application?stall=${stall.id}&section=${section.id}`;
-                                                                    }}
-                                                                    className="bg-green-100 border-2 border-green-400 text-green-800 font-bold py-3 px-3 rounded-lg text-sm hover:bg-green-200 hover:border-green-500 transition-all duration-200 shadow-sm hover:shadow-md"
-                                                                    title={`Click to apply for ${stall.stall_number}`}
-                                                                >
-                                                                    {stall.stall_number}
-                                                                </button>
-                                                            ))}
-                                                    </div>
-                                                    <div className="text-center mt-3">
-                                                        <p className="text-xs text-gray-500">
-                                                            ✅ Click any stall number above to begin your application
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Official Footer */}
+                    {/* Footer */}
                     <footer className="mt-12 bg-gray-800 text-white py-8">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="text-center">
                                 <div className="mb-4">
-                                    <h4 className="text-lg font-bold mb-2">TORIL PUBLIC MARKET - MAPALENGKE</h4>
-                                    <p className="text-gray-300">Department of Trade and Industry</p>
-                                    <p className="text-gray-300">Republic of the Philippines</p>
+                                    <h4 className="text-lg font-bold mb-2">CITY ECONOMICS ENTERPRISE</h4>
+                                    <p className="text-gray-300">Toril Public Market (TPM)</p>
+                                    <p className="text-gray-300">Toril Pob., Toril, Davao City, 8000 Philippines</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                     <div>
                                         <h5 className="font-semibold mb-2">CONTACT INFORMATION</h5>
-                                        <p className="text-sm text-gray-300">Phone: (123) 456-7890</p>
-                                        <p className="text-sm text-gray-300">Email: admin@mapalengke.com</p>
+                                        <p className="text-sm text-gray-300">Mobile: 0999 880 6475</p>
+                                        <p className="text-sm text-gray-300">Tel: (082) 3159348</p>
+                                        <p className="text-sm text-gray-300">Email: tpm.gov.22@gmail.com</p>
                                     </div>
                                     <div>
                                         <h5 className="font-semibold mb-2">OFFICE HOURS</h5>
-                                        <p className="text-sm text-gray-300">Monday - Friday: 8:00 AM - 5:00 PM</p>
-                                        <p className="text-sm text-gray-300">Saturday: 8:00 AM - 12:00 PM</p>
+                                        <p className="text-sm text-gray-300">Monday - Sunday</p>
+                                        <p className="text-sm text-gray-300">8:00 AM - 5:00 PM</p>
                                     </div>
                                     <div>
                                         <h5 className="font-semibold mb-2">APPLICATION SUPPORT</h5>
@@ -423,10 +393,10 @@ export default function PublicHome() {
 
                                 <div className="border-t border-gray-600 pt-4">
                                     <p className="text-sm text-gray-400">
-                                        © 2025 Department of Trade and Industry - Toril Public Market. All rights reserved.
+                                        © 2025 City Economics Enterprise - Toril Public Market. All rights reserved.
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        This is an official government website. For official business only.
+                                    <p className="text-xs text-gray-500 mt-2 bg-yellow-900 bg-opacity-30 py-2 px-4 rounded inline-block">
+                                        ⚠️ This is an academic thesis project and NOT an official government website.
                                     </p>
                                 </div>
                             </div>

@@ -671,6 +671,12 @@ export default function Stalls() {
   const [sectionFilter, setSectionFilter] = useState<'all' | string>('all')
   const [sortBy, setSortBy] = useState<'stall_number' | 'section' | 'status' | 'updated_at'>('section')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  
+  // Bulk selection state
+  const [selectedStalls, setSelectedStalls] = useState<Set<string>>(new Set())
+  const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false)
+  const [bulkStatus, setBulkStatus] = useState<StallStatus>('maintenance')
   const sampleStalls: Stall[] = [
     // Eatery Section
     {
@@ -1031,6 +1037,7 @@ export default function Stalls() {
 
         console.log(`Fetched ${mappedData.length} stalls from database:`, mappedData)
         setStalls(mappedData)
+        setLastUpdated(new Date())
 
         // Log some debugging info about vendor assignments
         const occupiedStalls = mappedData.filter((s: any) => s.status === 'occupied')
@@ -1040,11 +1047,13 @@ export default function Stalls() {
         // If no database data, use sample data
         console.log('No stalls data returned from database, using sample data')
         setStalls(sampleStalls)
+        setLastUpdated(new Date())
       }
     } catch (error) {
       console.error('Error fetching stalls:', error)
       // Fall back to sample data if there's an error
       setStalls(sampleStalls)
+      setLastUpdated(new Date())
     }
   }
 
@@ -1117,6 +1126,42 @@ export default function Stalls() {
     setIsEditModalOpen(true)
   }
 
+  // Bulk selection handlers
+  const toggleStallSelection = (stallId: string) => {
+    const newSelected = new Set(selectedStalls)
+    if (newSelected.has(stallId)) {
+      newSelected.delete(stallId)
+    } else {
+      newSelected.add(stallId)
+    }
+    setSelectedStalls(newSelected)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedStalls.size === filteredStalls.length) {
+      setSelectedStalls(new Set())
+    } else {
+      setSelectedStalls(new Set(filteredStalls.map(s => s.id)))
+    }
+  }
+
+  const handleBulkStatusUpdate = async () => {
+    try {
+      setLoading(true)
+      const promises = Array.from(selectedStalls).map(stallId =>
+        handleUpdateStall(stallId, { status: bulkStatus })
+      )
+      await Promise.all(promises)
+      setSelectedStalls(new Set())
+      setIsBulkUpdateModalOpen(false)
+      await fetchStalls()
+    } catch (error) {
+      console.error('Error updating stalls in bulk:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Handle URL parameters for section filtering
   useEffect(() => {
     const sectionParam = searchParams.get('section')
@@ -1146,6 +1191,46 @@ export default function Stalls() {
       }
     }
     fetchData()
+
+    // Set up real-time subscriptions for live updates
+    const stallsChannel = supabase
+      .channel('stalls-realtime')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stalls' },
+        (payload) => {
+          console.log('Stall change detected:', payload)
+          fetchStalls() // Refresh stalls data when changes occur
+        }
+      )
+      .subscribe()
+
+    const sectionsChannel = supabase
+      .channel('sections-realtime')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'market_sections' },
+        (payload) => {
+          console.log('Market section change detected:', payload)
+          fetchMarketSections() // Refresh sections data when changes occur
+        }
+      )
+      .subscribe()
+
+    const vendorsChannel = supabase
+      .channel('vendors-realtime')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'vendor_profiles' },
+        (payload) => {
+          console.log('Vendor profile change detected:', payload)
+          fetchStalls() // Refresh stalls to update vendor assignments
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(stallsChannel)
+      supabase.removeChannel(sectionsChannel)
+      supabase.removeChannel(vendorsChannel)
+    }
   }, [])
 
   // Keyboard shortcuts
@@ -1262,7 +1347,7 @@ export default function Stalls() {
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
-      <div className="sm:flex sm:items-center">
+      <div className="sm:flex sm:items-center sm:justify-between">
         <div className="sm:flex-auto">
           <div className="flex items-center space-x-2">
             <h1 className="text-2xl font-semibold text-gray-900">Stall Management</h1>
@@ -1278,6 +1363,16 @@ export default function Stalls() {
               : 'Manage and assign market stalls to vendors'
             }
           </p>
+          <div className="mt-2 flex items-center text-xs text-gray-500">
+            <div className="flex-shrink-0 h-2 w-2 rounded-full bg-green-500 animate-pulse mr-2"></div>
+            Real-time updates enabled • Last updated: {lastUpdated.toLocaleTimeString()}
+            <button
+              onClick={() => fetchStalls()}
+              className="ml-2 text-blue-600 hover:text-blue-800 font-medium"
+            >
+              ↻ Refresh
+            </button>
+          </div>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex space-x-3">
           {sectionFilter !== 'all' && (
@@ -1406,6 +1501,46 @@ export default function Stalls() {
         )}
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedStalls.size > 0 && (
+        <div className="mt-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium text-indigo-900">
+                  {selectedStalls.size} stall{selectedStalls.size > 1 ? 's' : ''} selected
+                </span>
+              </div>
+              <div className="text-xs text-indigo-700">
+                {selectedStalls.size === filteredStalls.length ? 'All visible stalls selected' : 'Select more or choose an action'}
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setSelectedStalls(new Set())}
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+              >
+                Clear Selection
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsBulkUpdateModalOpen(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Change Status
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Results Summary */}
       <div className="mt-6 flex items-center justify-between">
         <div className="flex items-center space-x-6">
@@ -1468,6 +1603,14 @@ export default function Stalls() {
             <table className="min-w-full divide-y divide-gray-300 shadow-sm rounded-lg overflow-hidden">
               <thead className="bg-gray-50">
                 <tr>
+                  <th scope="col" className="relative px-7 sm:w-12 sm:px-6">
+                    <input
+                      type="checkbox"
+                      className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                      checked={filteredStalls.length > 0 && selectedStalls.size === filteredStalls.length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
                     <button
                       type="button"
@@ -1534,7 +1677,7 @@ export default function Stalls() {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8">
+                    <td colSpan={6} className="text-center py-8">
                       <div className="flex justify-center items-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                         <span className="ml-2 text-gray-600">Loading stalls...</span>
@@ -1543,7 +1686,7 @@ export default function Stalls() {
                   </tr>
                 ) : filteredStalls.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8">
+                    <td colSpan={6} className="text-center py-8">
                       <div className="text-gray-500">
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1564,7 +1707,20 @@ export default function Stalls() {
                   </tr>
                 ) : (
                   filteredStalls.map((stall) => (
-                    <tr key={stall.id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <tr 
+                      key={stall.id} 
+                      className={`transition-colors duration-200 ${
+                        selectedStalls.has(stall.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <td className="relative px-7 sm:w-12 sm:px-6">
+                        <input
+                          type="checkbox"
+                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                          checked={selectedStalls.has(stall.id)}
+                          onChange={() => toggleStallSelection(stall.id)}
+                        />
+                      </td>
                       <td className="py-4 pl-4 pr-3 text-sm sm:pl-0 w-64">
                         <div className="flex items-center">
                           <div className="h-8 w-12 flex-shrink-0 rounded bg-indigo-100 flex items-center justify-center">
@@ -1639,6 +1795,124 @@ export default function Stalls() {
           </div>
         </div>
       </div>
+
+      {/* Bulk Status Update Modal */}
+      {isBulkUpdateModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Bulk Status Update</h3>
+                <button
+                  onClick={() => setIsBulkUpdateModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex">
+                  <svg className="h-5 w-5 text-amber-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-amber-800">
+                      Update {selectedStalls.size} stall{selectedStalls.size > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      This action will change the status of all selected stalls. This cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-900">
+                  New Status
+                </label>
+                <div className="space-y-2">
+                  {(['vacant', 'occupied', 'maintenance'] as StallStatus[]).map((status) => (
+                    <label
+                      key={status}
+                      className={`relative flex cursor-pointer rounded-lg p-4 border-2 transition-all ${
+                        bulkStatus === status
+                          ? 'border-indigo-600 bg-indigo-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="bulkStatus"
+                        value={status}
+                        checked={bulkStatus === status}
+                        onChange={(e) => setBulkStatus(e.target.value as StallStatus)}
+                        className="sr-only"
+                      />
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <div className={`h-3 w-3 rounded-full mr-3 ${
+                            status === 'vacant' ? 'bg-green-500' :
+                            status === 'occupied' ? 'bg-blue-500' :
+                            'bg-yellow-500'
+                          }`}></div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {status === 'vacant' && 'Available for assignment'}
+                              {status === 'occupied' && 'Currently assigned to vendor'}
+                              {status === 'maintenance' && 'Temporarily unavailable'}
+                            </p>
+                          </div>
+                        </div>
+                        {bulkStatus === status && (
+                          <svg className="h-5 w-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkUpdateModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkStatusUpdate}
+                  disabled={loading}
+                  className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Updating...
+                    </span>
+                  ) : (
+                    `Update ${selectedStalls.size} Stall${selectedStalls.size > 1 ? 's' : ''}`
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AddStallModal
         isOpen={isAddModalOpen}

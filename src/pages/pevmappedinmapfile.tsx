@@ -16,10 +16,6 @@ interface Props {
   stalls?: Stall[];
   onStallClick?: (stall: Stall, polygon: any) => void;
   colorMode?: 'simple' | 'category'; // 'simple' = green/grey only, 'category' = category colors
-  hoveredStallNumber?: string | null; // For highlighting stall on hover
-  selectedStallNumber?: string | null; // For highlighting clicked/selected stall
-  showStallLabels?: boolean; // Whether to show stall number labels on the map
-  highlightedSectionCode?: string | null; // Section code to highlight, others will be greyed out
 }
 
 function base64ToUint8Array(base64: string) {
@@ -40,10 +36,6 @@ export default function MappedinMap({
   stalls,
   onStallClick,
   colorMode = 'category', // Default to category colors for backward compatibility
-  hoveredStallNumber = null,
-  selectedStallNumber = null,
-  showStallLabels = false,
-  highlightedSectionCode = null,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<any>(null);
@@ -155,9 +147,7 @@ export default function MappedinMap({
                       
                       if (mapData) {
                         console.log("🗺️ MappedinMap: Successfully fetched map data from API, initializing map...");
-                        const mapInstance = await mod.show3dMap(containerRef.current!, mapData, {
-                          mappedinControls: true, // Enable Mappedin controls
-                        } as any);
+                        const mapInstance = await mod.show3dMap(containerRef.current!, mapData);
                         instanceRef.current = mapInstance;
                         setMap(mapInstance);
                         
@@ -299,18 +289,6 @@ export default function MappedinMap({
               const mapInstance = await mod.show3dMap(containerRef.current, mapData);
               instanceRef.current = mapInstance;
               setMap(mapInstance);
-              
-              // Set camera angle
-              try {
-                mapInstance.Camera.set({
-                  bearing: 74,
-                  pitch: 0,
-                  zoomLevel: 20,
-                });
-              } catch (err) {
-                console.warn("Failed to set camera:", err);
-              }
-              
               try { 
                 (mapInstance as any).__mapData = mapData;
               } catch {}
@@ -338,18 +316,6 @@ export default function MappedinMap({
               const mapInstance = await mod.show3dMap(containerRef.current, mapData);
               instanceRef.current = mapInstance;
               setMap(mapInstance);
-              
-              // Set camera angle
-              try {
-                mapInstance.Camera.set({
-                  bearing: 74,
-                  pitch: 0,
-                  zoomLevel: 20
-                });
-              } catch (err) {
-                console.warn("Failed to set camera:", err);
-              }
-              
               try { (mapInstance as any).__mapData = mapData; } catch {}
               setMapDataState(mapData);
               if (onMapReady) onMapReady(mapInstance);
@@ -372,24 +338,10 @@ export default function MappedinMap({
         if (mapDataResponse?.mapData) {
           try {
             console.log("MappedinMap: initializing show3dMap with server-provided mapData...");
-            const mapInstance = await mod.show3dMap(containerRef.current, mapDataResponse.mapData, {
-              mappedinControls: true,
-            } as any);
+            const mapInstance = await mod.show3dMap(containerRef.current, mapDataResponse.mapData);
             console.log("MappedinMap: show3dMap succeeded using server mapData:", mapInstance);
             instanceRef.current = mapInstance;
             setMap(mapInstance); // Set map instance to state
-            
-            // Set camera angle
-            try {
-              mapInstance.Camera.set({
-                bearing: 74,
-                pitch: 0,
-                zoomLevel: 20
-              });
-            } catch (err) {
-              console.warn("Failed to set camera:", err);
-            }
-            
             try { (mapInstance as any).__mapData = mapDataResponse.mapData; } catch {}
             setMapDataState(mapDataResponse.mapData);
             if (onMapReady) onMapReady(mapInstance);
@@ -658,10 +610,6 @@ export default function MappedinMap({
         if (stall) {
           // Check if stall is vacant/available
           const isVacant = stall.status === 'vacant' || stall.status === 'available';
-          const stallPrefix = stallNumber.match(/^[A-Z]+-/)?.[0] || '';
-          
-          // Check if this stall should be highlighted or greyed out
-          const isHighlighted = !highlightedSectionCode || stallNumber.startsWith(highlightedSectionCode);
           
           let color: string;
           let hoverColor: string;
@@ -669,12 +617,7 @@ export default function MappedinMap({
           
           if (colorMode === 'simple') {
             // SIMPLE MODE (PublicHome.tsx): GREEN for vacant, GREY for occupied
-            if (!isHighlighted) {
-              // Grey out stalls not in the highlighted section
-              color = '#D1D5DB'; // Light grey for non-highlighted
-              hoverColor = '#D1D5DB';
-              interactive = false;
-            } else if (isVacant) {
+            if (isVacant) {
               color = '#10B981'; // Emerald green
               hoverColor = '#059669'; // Darker green on hover
               interactive = !!onStallClick;
@@ -688,26 +631,22 @@ export default function MappedinMap({
               console.log(`🔒 OCCUPIED stall ${stallNumber} - GREY (not clickable)`);
             }
           } else {
-            // CATEGORY MODE (IndoorMap.tsx): All stalls clickable to show details
-            if (!isHighlighted) {
-              // Grey out stalls not in the highlighted section
-              color = '#D1D5DB';
-              hoverColor = '#D1D5DB';
-              interactive = false;
-            } else if (isVacant) {
-              // Vacant stalls use a subtle gray - not highlighted by default
-              color = '#d1d5db';  // Light gray (same tone as other stalls)
-              hoverColor = '#9ca3af';  // Slightly darker gray on hover
+            // CATEGORY MODE (IndoorMap.tsx): Show category colors
+            if (isVacant) {
+              // Vacant stalls still shown in green for visibility
+              color = '#10B981';
+              hoverColor = '#059669';
               interactive = !!onStallClick;
               vacantCount++;
-              console.log(`✅ VACANT stall ${stallNumber} - GRAY & CLICKABLE`);
+              console.log(`✅ VACANT stall ${stallNumber} - GREEN & CLICKABLE`);
             } else {
-              // Occupied stalls show their category color and are clickable
-              color = sectionColors[stallPrefix] || '#9E9E9E';
+              // Occupied stalls show their category color
+              const prefix = stallNumber.match(/^[A-Z]+-/)?.[0] || '';
+              color = sectionColors[prefix] || '#9E9E9E';
               hoverColor = color;
-              interactive = !!onStallClick; // Changed: make occupied stalls clickable too
+              interactive = false;
               occupiedCount++;
-              console.log(`🔒 OCCUPIED stall ${stallNumber} - ${color} (${stallPrefix})`);
+              console.log(`🔒 OCCUPIED stall ${stallNumber} - ${color} (${prefix})`);
             }
           }
           
@@ -738,47 +677,6 @@ export default function MappedinMap({
       console.log(`  ✅ ${vacantCount} VACANT stalls (green, clickable)`);
       console.log(`  🔒 ${occupiedCount} OCCUPIED stalls (${colorMode === 'simple' ? 'grey' : 'category colors'}, not clickable)`);
       console.log(`  ⚪ ${unmatchedCount} unmatched spaces (gray)`);
-
-      // Add stall number labels if showStallLabels is true
-      const labels: any[] = [];
-      if (showStallLabels) {
-        console.log('MappedinMap: Adding stall number labels...', 'Spaces count:', spaces.length);
-        console.log('MappedinMap: Labels API:', m.Labels);
-        
-        spaces.forEach((space: any) => {
-          const stallNumber = space?.name;
-          const stall = stallMap.get(stallNumber);
-          
-          if (stall && space.center) {
-            try {
-              // Use the Labels API from Mappedin SDK
-              const label = m.Labels.add(space.center, stallNumber, {
-                appearance: {
-                  marker: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                    foregroundColor: '#FFFFFF',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    borderRadius: '6px',
-                    padding: '6px 10px',
-                  },
-                  text: {
-                    size: 14,
-                    weight: 'bold',
-                  }
-                },
-                rank: 'always-visible',
-                interactive: false,
-              });
-              
-              labels.push(label);
-              console.log(`✅ Label created for ${stallNumber}`);
-            } catch (err) {
-              console.error(`❌ Failed to create label for ${stallNumber}:`, err);
-            }
-          }
-        });
-        console.log(`MappedinMap: Created ${labels.length} stall labels total`);
-      }
 
       // Hover handler - Show tooltip for vacant stalls
       const handleHover = (event: any) => {
@@ -819,7 +717,7 @@ export default function MappedinMap({
         } catch {}
       };
 
-      // Click handler - triggers for ALL stalls to show details
+      // Click handler - ONLY triggers for vacant/available stalls (interactive=true)
       const handleClick = (event: any) => {
         if (!onStallClick) return;
         
@@ -831,12 +729,25 @@ export default function MappedinMap({
         const stall = stallMap.get(stallNumber);
         
         if (stall) {
-          console.log(`✅ Clicked stall: ${stallNumber} - Status: ${stall.status}`);
+          // Double-check: Only allow clicks on vacant/available stalls
+          const isVacant = stall.status === 'vacant' || stall.status === 'available';
           
-          // Don't change color on click - keep original color
-          
-          // Trigger callback for ALL stalls (vacant, occupied, maintenance)
-          onStallClick(stall, space);
+          if (isVacant) {
+            console.log(`✅ Clicked VACANT stall: ${stallNumber} - Status: ${stall.status}`);
+            
+            // Highlight selected stall with purple-blue (matching React Native)
+            try {
+              m.updateState(space, {
+                color: '#667eea',
+                hoverColor: '#764ba2',
+              });
+            } catch {}
+            
+            onStallClick(stall, space);
+          } else {
+            console.log(`🔒 Clicked OCCUPIED stall: ${stallNumber} - Status: ${stall.status} (no action)`);
+            // Don't trigger callback for occupied stalls
+          }
         }
       };
 
@@ -864,146 +775,12 @@ export default function MappedinMap({
           off?.(); 
           offHover?.();
           offHoverOff?.();
-          // Remove all labels on cleanup
-          labels.forEach((label) => {
-            try {
-              m.Labels?.remove?.(label);
-            } catch (err) {
-              console.warn('Failed to remove label:', err);
-            }
-          });
         } catch {} 
       };
     } catch (err) {
       console.warn("MappedinMap: error applying stall overlays:", err);
     }
-  }, [map, stalls, onStallClick, mapDataState, colorMode, showStallLabels, highlightedSectionCode]);
-
-  // Highlight hovered stall from search
-  useEffect(() => {
-    if (!map || !hoveredStallNumber) return;
-
-    try {
-      const m: any = map;
-      const mapData = (m as any).__mapData ?? mapDataState;
-      
-      if (!mapData || typeof mapData.getByType !== 'function') return;
-      
-      const spaces = mapData.getByType('space');
-      const space = spaces.find((s: any) => s.name === hoveredStallNumber);
-      
-      if (space) {
-        // Highlight with black color
-        m.updateState(space, {
-          color: '#000000',
-          hoverColor: '#000000',
-        });
-      }
-
-      // Cleanup: reset color when hover changes
-      return () => {
-        if (space && stalls) {
-          const stall = stalls.find((s) => s.stall_number === hoveredStallNumber);
-          if (stall) {
-            // Reset to original color based on status/category
-            const isVacant = stall.status === 'vacant' || stall.status === 'available';
-            let color: string;
-            
-            if (colorMode === 'simple') {
-              color = isVacant ? '#10B981' : '#9CA3AF';
-            } else {
-              if (isVacant) {
-                color = '#d1d5db';  // Light gray for vacant (not highlighted by default)
-              } else {
-                const prefix = hoveredStallNumber.match(/^[A-Z]+-/)?.[0] || '';
-                const sectionColors: Record<string, string> = {
-                  'E-': '#FF6B6B',
-                  'FV-': '#4CAF50',
-                  'DF-': '#FF9800',
-                  'G-': '#2196F3',
-                  'RG-': '#FFC107',
-                  'V-': '#9C27B0',
-                  'F-': '#00BCD4',
-                  'M-': '#F44336',
-                };
-                color = sectionColors[prefix] || '#9E9E9E';
-              }
-            }
-            
-            m.updateState(space, {
-              color: color,
-              hoverColor: color,
-            });
-          }
-        }
-      };
-    } catch (err) {
-      console.warn("MappedinMap: error highlighting hovered stall:", err);
-    }
-  }, [hoveredStallNumber, map, mapDataState, stalls, colorMode]);
-
-  // Highlight selected/clicked stall with black
-  useEffect(() => {
-    if (!map || !selectedStallNumber) return;
-
-    try {
-      const m: any = map;
-      const mapData = (m as any).__mapData ?? mapDataState;
-      
-      if (!mapData || typeof mapData.getByType !== 'function') return;
-      
-      const spaces = mapData.getByType('space');
-      const space = spaces.find((s: any) => s.name === selectedStallNumber);
-      
-      if (space) {
-        // Highlight selected stall with black color
-        m.updateState(space, {
-          color: '#000000',
-          hoverColor: '#000000',
-        });
-      }
-
-      // Cleanup: reset color when selection changes
-      return () => {
-        if (space && stalls) {
-          const stall = stalls.find((s) => s.stall_number === selectedStallNumber);
-          if (stall) {
-            // Reset to original color based on status/category
-            const isVacant = stall.status === 'vacant' || stall.status === 'available';
-            let color: string;
-            
-            if (colorMode === 'simple') {
-              color = isVacant ? '#10B981' : '#9CA3AF';
-            } else {
-              if (isVacant) {
-                color = '#d1d5db';  // Light gray for vacant (not highlighted by default)
-              } else {
-                const prefix = selectedStallNumber.match(/^[A-Z]+-/)?.[0] || '';
-                const sectionColors: Record<string, string> = {
-                  'E-': '#FF6B6B',
-                  'FV-': '#4CAF50',
-                  'DF-': '#FF9800',
-                  'G-': '#2196F3',
-                  'RG-': '#FFC107',
-                  'V-': '#9C27B0',
-                  'F-': '#00BCD4',
-                  'M-': '#F44336',
-                };
-                color = sectionColors[prefix] || '#9E9E9E';
-              }
-            }
-            
-            m.updateState(space, {
-              color: color,
-              hoverColor: color,
-            });
-          }
-        }
-      };
-    } catch (err) {
-      console.warn("MappedinMap: error highlighting selected stall:", err);
-    }
-  }, [selectedStallNumber, map, mapDataState, stalls, colorMode]);
+  }, [map, stalls, onStallClick, mapDataState, colorMode]);
 
   return (
     <div style={{ position: "relative", width: "100%", minHeight: 600 }}>

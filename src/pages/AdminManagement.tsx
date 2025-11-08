@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 
 interface AdminProfile {
     id: string
@@ -22,6 +23,7 @@ interface InviteFormData {
 }
 
 export default function AdminManagement() {
+    const navigate = useNavigate()
     const [admins, setAdmins] = useState<AdminProfile[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -214,13 +216,13 @@ export default function AdminManagement() {
 
                     {/* Invite Button */}
                     <button
-                        onClick={() => setShowInviteModal(true)}
+                        onClick={() => navigate('/signup?role=admin')}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
                     >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        Invite Admin
+                        Add New Admin
                     </button>
                 </div>
             </div>

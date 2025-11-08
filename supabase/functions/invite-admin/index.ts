@@ -46,7 +46,7 @@ serve(async (req) => {
       .eq('id', user.id)
       .single()
 
-    if (adminError || !adminProfile || adminProfile.status !== 'active') {
+    if (adminError || !adminProfile || adminProfile.status.toLowerCase() !== 'active') {
       throw new Error('Unauthorized: User is not an active admin')
     }
 

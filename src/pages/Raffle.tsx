@@ -458,7 +458,6 @@ const handleRaffle = async () => {
       password_hash: vendorPasswordHash,
       actual_occupant_username: actualOccupantUsername || null,
       actual_occupant_password_hash: actualOccupantPasswordHash,
-      actual_occupant_password_hash: actualOccupantPasswordHash,
     };
 
     const { error: insertError } = await supabase

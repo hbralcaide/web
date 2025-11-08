@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { useNavigate } from 'react-router-dom'
 
 interface AdminProfile {
     id: string
@@ -23,7 +22,6 @@ interface InviteFormData {
 }
 
 export default function AdminManagement() {
-    const navigate = useNavigate()
     const [admins, setAdmins] = useState<AdminProfile[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -133,49 +131,44 @@ export default function AdminManagement() {
 
     const handleStatusChange = async (admin: AdminProfile, newStatus: 'Active' | 'Inactive') => {
         try {
-            const statusValue = newStatus.toLowerCase()
-            const { error } = await (supabase
-                .from('admin_profiles') as any)
-                .update({ status: statusValue })
+            // Status in database uses capital first letter: Active or Inactive
+            const { error } = await supabase
+                .from('admin_profiles')
+                .update({ status: newStatus })
                 .eq('id', admin.id)
 
             if (error) throw error
 
             // Update local state
             setAdmins(admins.map(a => 
-                a.id === admin.id ? { ...a, status: statusValue } : a
+                a.id === admin.id ? { ...a, status: newStatus } : a
             ))
 
             setConfirmModal({ ...confirmModal, show: false })
+            alert(`Admin ${newStatus === 'Active' ? 'activated' : 'deactivated'} successfully!`)
         } catch (error) {
             console.error('Error updating admin status:', error)
-            alert('Failed to update admin status')
+            alert('Failed to update admin status: ' + (error as any).message)
         }
     }
 
     const handleDeleteAdmin = async (admin: AdminProfile) => {
         try {
-            // Delete admin profile
-            const { error: profileError } = await supabase
+            // Delete admin profile (auth user will remain but can't access admin panel)
+            const { error } = await supabase
                 .from('admin_profiles')
                 .delete()
                 .eq('id', admin.id)
 
-            if (profileError) throw profileError
-
-            // Try to delete auth user (may require service role key)
-            const { error: authError } = await supabase.auth.admin.deleteUser(admin.auth_user_id)
-            
-            if (authError) {
-                console.warn('Could not delete auth user:', authError)
-            }
+            if (error) throw error
 
             // Update local state
             setAdmins(admins.filter(a => a.id !== admin.id))
             setConfirmModal({ ...confirmModal, show: false })
+            alert('Admin deleted successfully!')
         } catch (error) {
             console.error('Error deleting admin:', error)
-            alert('Failed to delete admin')
+            alert('Failed to delete admin: ' + (error as any).message)
         }
     }
 
@@ -213,17 +206,6 @@ export default function AdminManagement() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-
-                    {/* Invite Button */}
-                    <button
-                        onClick={() => navigate('/signup?role=admin')}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                    >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add New Admin
-                    </button>
                 </div>
             </div>
 

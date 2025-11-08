@@ -36,6 +36,7 @@ import VendorStatus from './pages/VendorStatus';
 import RaffleWinnerDocuments from './pages/RaffleWinnerDocuments';
 import Raffle from './pages/Raffle';
 import AdminManagement from './pages/AdminManagement';
+import AddAdmin from './pages/AddAdmin';
 import './index.css';
 
 function App() {
@@ -131,6 +132,7 @@ function App() {
             <Route path="products" element={<Products />} />
             {/* Admin Management */}
             <Route path="admins" element={<AdminManagement />} />
+            <Route path="admins/add" element={<AddAdmin />} />
             {/* Admin user/profile settings */}
             <Route path="profile" element={<Profile />} />
           </Route>

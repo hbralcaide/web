@@ -695,12 +695,12 @@ export default function MappedinMap({
               hoverColor = '#D1D5DB';
               interactive = false;
             } else if (isVacant) {
-              // Vacant stalls use a subtle gray - not highlighted by default
-              color = '#d1d5db';  // Light gray (same tone as other stalls)
-              hoverColor = '#9ca3af';  // Slightly darker gray on hover
+              // Vacant stalls show in GREEN to indicate availability
+              color = '#10B981';  // Green for vacant stalls
+              hoverColor = '#059669';  // Darker green on hover
               interactive = !!onStallClick;
               vacantCount++;
-              console.log(`✅ VACANT stall ${stallNumber} - GRAY & CLICKABLE`);
+              console.log(`✅ VACANT stall ${stallNumber} - GREEN & CLICKABLE`);
             } else {
               // Occupied stalls show their category color and are clickable
               color = sectionColors[stallPrefix] || '#9E9E9E';

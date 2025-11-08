@@ -493,16 +493,44 @@ const IndoorMarketMap: React.FC<IndoorMarketMapProps> = ({ onMapReady }) => {
         <div style={styles.filterContainer}>
           <div style={styles.filterGroup}>
             <label style={styles.filterLabel}>Status:</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | StallStatus)}
-              style={styles.filterSelect}
-            >
-              <option value="all">All Statuses</option>
-              <option value="vacant">Vacant</option>
-              <option value="occupied">Occupied</option>
-              <option value="maintenance">Maintenance</option>
-            </select>
+            <div style={styles.buttonGroup}>
+              <button
+                onClick={() => setStatusFilter('all')}
+                style={{
+                  ...styles.filterButton,
+                  ...(statusFilter === 'all' ? styles.filterButtonActive : {})
+                }}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setStatusFilter('vacant')}
+                style={{
+                  ...styles.filterButton,
+                  ...(statusFilter === 'vacant' ? styles.filterButtonVacant : {})
+                }}
+              >
+                Vacant
+              </button>
+              <button
+                onClick={() => setStatusFilter('occupied')}
+                style={{
+                  ...styles.filterButton,
+                  ...(statusFilter === 'occupied' ? styles.filterButtonOccupied : {})
+                }}
+              >
+                Occupied
+              </button>
+              <button
+                onClick={() => setStatusFilter('maintenance')}
+                style={{
+                  ...styles.filterButton,
+                  ...(statusFilter === 'maintenance' ? styles.filterButtonMaintenance : {})
+                }}
+              >
+                Maintenance
+              </button>
+            </div>
           </div>
 
           <div style={styles.filterGroup}>
@@ -1000,6 +1028,43 @@ const styles: { [k: string]: React.CSSProperties } = {
     background: "#ffffff",
     cursor: "pointer",
     outline: "none",
+  },
+  buttonGroup: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  filterButton: {
+    padding: "6px 12px",
+    fontSize: 13,
+    fontWeight: 500,
+    border: "1px solid #d1d5db",
+    borderRadius: 6,
+    background: "#ffffff",
+    color: "#374151",
+    cursor: "pointer",
+    transition: "all 0.2s",
+    outline: "none",
+  },
+  filterButtonActive: {
+    background: "#4f46e5",
+    color: "#ffffff",
+    borderColor: "#4f46e5",
+  },
+  filterButtonVacant: {
+    background: "#10b981",
+    color: "#ffffff",
+    borderColor: "#10b981",
+  },
+  filterButtonOccupied: {
+    background: "#3b82f6",
+    color: "#ffffff",
+    borderColor: "#3b82f6",
+  },
+  filterButtonMaintenance: {
+    background: "#f59e0b",
+    color: "#ffffff",
+    borderColor: "#f59e0b",
   },
   clearButton: {
     padding: "6px 12px",

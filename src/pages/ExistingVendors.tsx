@@ -735,12 +735,56 @@ const VendorDetailsModal: React.FC<VendorDetailsModalProps> = ({
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
+    // Only validate fields that were actually changed from the original vendor data
+    // Check if only status changed - if so, skip other validations
+    const changedFields = Object.keys(formData).filter(key => {
+      const formValue = formData[key as keyof typeof formData];
+      const vendorValue = vendor?.[key as keyof typeof vendor];
+      // For phone number, compare without the '9' prefix
+      if (key === 'phone_number' && vendor) {
+        const vendorPhone = vendor.phone_number?.startsWith('9') ? vendor.phone_number.substring(1) : vendor.phone_number || '';
+        return formValue !== vendorPhone;
+      }
+      if (key === 'actual_occupant_phone' && vendor) {
+        const vendorPhone = vendor.actual_occupant_phone?.startsWith('9') ? vendor.actual_occupant_phone.substring(1) : vendor.actual_occupant_phone || '';
+        return formValue !== vendorPhone;
+      }
+      return formValue !== (vendorValue || '');
+    });
+
+    console.log('Changed fields:', changedFields);
+
+    // If only status changed, skip validation
+    if (changedFields.length === 1 && changedFields[0] === 'status') {
+      console.log('Only status changed, skipping validation');
+      setErrors({}); // Clear any existing errors
+      return true;
+    }
+
+    // If no fields changed, skip validation
+    if (changedFields.length === 0) {
+      console.log('No fields changed');
+      setErrors({}); // Clear any existing errors
+      return true;
+    }
+
     // Required fields based on database schema (NOT NULL columns)
-    if (!formData.first_name.trim()) newErrors.first_name = 'First name is required';
-    if (!formData.last_name.trim()) newErrors.last_name = 'Last name is required';
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
-    if (!formData.phone_number.trim()) newErrors.phone_number = 'Phone number is required';
-    if (!formData.business_name.trim()) newErrors.business_name = 'Business name is required';
+    // Only validate fields that are actually being edited/changed
+    if (changedFields.includes('first_name') && !formData.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    }
+    if (changedFields.includes('last_name') && !formData.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
+    }
+    if (changedFields.includes('username') && !formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    }
+    if (changedFields.includes('phone_number') && !formData.phone_number.trim()) {
+      newErrors.phone_number = 'Phone number is required';
+    }
+    if (changedFields.includes('business_name') && !formData.business_name.trim()) {
+      newErrors.business_name = 'Business name is required';
+    }
 
     console.log('Validation errors:', newErrors);
     setErrors(newErrors);

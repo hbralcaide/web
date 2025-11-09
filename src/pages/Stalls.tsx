@@ -40,6 +40,7 @@ interface AddStallModalProps {
   onClose: () => void
   onAdd: (stall: NewStall) => Promise<void>
   marketSections: MarketSection[]
+  existingStalls: Stall[]
   onRefreshSections?: () => Promise<void>
 }
 
@@ -50,7 +51,7 @@ interface EditStallModalProps {
   stall: Stall | null
 }
 
-function AddStallModal({ isOpen, onClose, onAdd, marketSections, onRefreshSections }: AddStallModalProps) {
+function AddStallModal({ isOpen, onClose, onAdd, marketSections, existingStalls, onRefreshSections }: AddStallModalProps) {
   const [selectedSection, setSelectedSection] = useState<MarketSection | null>(null)
   const [stallCount, setStallCount] = useState(1)
   const [locationDesc, setLocationDesc] = useState('')
@@ -90,6 +91,27 @@ function AddStallModal({ isOpen, onClose, onAdd, marketSections, onRefreshSectio
 
   const validateStallCount = (section: MarketSection, count: number): boolean => {
     return count >= 1 && count <= section.capacity
+  }
+
+  // Get available stall numbers for the selected section
+  const getAvailableStallNumbers = (): number[] => {
+    if (!selectedSection) return []
+    
+    const existingStallNumbers = existingStalls
+      .filter(s => s.section_id === selectedSection.id)
+      .map(s => {
+        const match = s.stall_number.match(/-(\d+)$/)
+        return match ? parseInt(match[1]) : 0
+      })
+      .filter(num => num > 0)
+
+    const available: number[] = []
+    for (let i = 1; i <= selectedSection.capacity && available.length < stallCount; i++) {
+      if (!existingStallNumbers.includes(i)) {
+        available.push(i)
+      }
+    }
+    return available
   }
 
   const handleSectionSearchChange = (value: string) => {
@@ -157,9 +179,37 @@ function AddStallModal({ isOpen, onClose, onAdd, marketSections, onRefreshSectio
 
     setLoading(true)
     try {
-      // Create multiple stalls with automatic numbering
-      for (let i = 1; i <= stallCount; i++) {
-        const fullStallNumber = `${selectedSection.code}-${i}`
+      // Get existing stall numbers for this section
+      const existingStallNumbers = existingStalls
+        .filter(s => s.section_id === selectedSection.id)
+        .map(s => {
+          // Extract number from stall_number (e.g., "A-3" -> 3)
+          const match = s.stall_number.match(/-(\d+)$/)
+          return match ? parseInt(match[1]) : 0
+        })
+        .filter(num => num > 0)
+
+      console.log('Existing stall numbers in section:', existingStallNumbers)
+
+      // Find available stall numbers
+      const availableNumbers: number[] = []
+      for (let i = 1; i <= selectedSection.capacity && availableNumbers.length < stallCount; i++) {
+        if (!existingStallNumbers.includes(i)) {
+          availableNumbers.push(i)
+        }
+      }
+
+      if (availableNumbers.length < stallCount) {
+        setValidationError(`Only ${availableNumbers.length} available stall number(s) in this section`)
+        setLoading(false)
+        return
+      }
+
+      console.log('Creating stalls with numbers:', availableNumbers)
+
+      // Create stalls with available numbers
+      for (const stallNum of availableNumbers) {
+        const fullStallNumber = `${selectedSection.code}-${stallNum}`
         await onAdd({
           section_id: selectedSection.id,
           stall_number: fullStallNumber,
@@ -176,7 +226,7 @@ function AddStallModal({ isOpen, onClose, onAdd, marketSections, onRefreshSectio
       setValidationError(null)
     } catch (error) {
       console.error('Error adding stalls:', error)
-      setValidationError('Failed to add stalls')
+      setValidationError('Failed to add stalls. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -276,9 +326,26 @@ function AddStallModal({ isOpen, onClose, onAdd, marketSections, onRefreshSectio
               </button>
             </div>
             {selectedSection && (
-              <p className="text-xs text-gray-500">
-                Format: {selectedSection.code}-{stallCount} (Range: 1 to {selectedSection.capacity})
-              </p>
+              <div className="text-xs text-gray-500 space-y-1">
+                <p>Section capacity: 1 to {selectedSection.capacity}</p>
+                {(() => {
+                  const availableNumbers = getAvailableStallNumbers()
+                  if (availableNumbers.length > 0) {
+                    return (
+                      <p className="text-green-600 font-medium">
+                        Will create: {availableNumbers.map(n => `${selectedSection.code}-${n}`).join(', ')}
+                      </p>
+                    )
+                  } else if (stallCount > 0) {
+                    return (
+                      <p className="text-red-600 font-medium">
+                        No available stall numbers in this section
+                      </p>
+                    )
+                  }
+                  return null
+                })()}
+              </div>
             )}
           </div>
 
@@ -1919,6 +1986,7 @@ export default function Stalls() {
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddStall}
         marketSections={marketSections}
+        existingStalls={stalls}
         onRefreshSections={fetchMarketSections}
       />
 

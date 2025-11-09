@@ -37,6 +37,10 @@ interface VendorApplication {
     marriage_certificate_rejection_reason?: string;
     notarized_document_approved?: boolean;
     notarized_document_rejection_reason?: string;
+    business_permit_approved?: boolean;
+    business_permit_rejection_reason?: string;
+    cedula_approved?: boolean;
+    cedula_rejection_reason?: string;
 }
 
 // Refactor Application type to ensure compatibility
@@ -60,6 +64,10 @@ interface Application {
     marriage_certificate_rejection_reason?: string;
     notarized_document_approved?: boolean;
     notarized_document_rejection_reason?: string;
+    business_permit_approved?: boolean;
+    business_permit_rejection_reason?: string;
+    cedula_approved?: boolean;
+    cedula_rejection_reason?: string;
 }
 
 export default function VendorStatus() {
@@ -506,7 +514,13 @@ export default function VendorStatus() {
                     marriage_certificate_approved,
                     marriage_certificate_rejection_reason,
                     notarized_document_approved,
-                    notarized_document_rejection_reason
+                    notarized_document_rejection_reason,
+                    business_permit_approved,
+                    business_permit_rejection_reason,
+                    business_permit_document,
+                    cedula_approved,
+                    cedula_rejection_reason,
+                    cedula_document
                 `)
                 .eq('application_number', applicationNumber)
                 .single();
@@ -900,6 +914,54 @@ export default function VendorStatus() {
                                     </div>
                                 </div>
                             )}
+
+                            {applicationData.business_permit_approved === false && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1 mr-4">
+                                            <h4 className="font-medium text-red-800">Business Permit</h4>
+                                            <p className="text-sm text-red-600 mt-1">
+                                                <strong>Rejection Reason:</strong> {applicationData.business_permit_rejection_reason}
+                                            </p>
+                                            <div className="mt-2 p-2 bg-blue-100 border border-blue-300 rounded">
+                                                <p className="text-xs text-blue-700">
+                                                    <strong>Required:</strong> Clear photo of your valid Business Permit document
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Link
+                                            to={`/raffle-winner-documents?app=${applicationData.application_number}`}
+                                            className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg text-sm flex-shrink-0 transition-colors"
+                                        >
+                                            Re-upload Document
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
+
+                            {applicationData.cedula_approved === false && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1 mr-4">
+                                            <h4 className="font-medium text-red-800">Cedula (Community Tax Certificate)</h4>
+                                            <p className="text-sm text-red-600 mt-1">
+                                                <strong>Rejection Reason:</strong> {applicationData.cedula_rejection_reason}
+                                            </p>
+                                            <div className="mt-2 p-2 bg-blue-100 border border-blue-300 rounded">
+                                                <p className="text-xs text-blue-700">
+                                                    <strong>Required:</strong> Clear photo of your valid Cedula (Community Tax Certificate)
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Link
+                                            to={`/raffle-winner-documents?app=${applicationData.application_number}`}
+                                            className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg text-sm flex-shrink-0 transition-colors"
+                                        >
+                                            Re-upload Document
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="mt-4 p-4 bg-orange-100 border border-orange-300 rounded-lg">
@@ -944,16 +1006,88 @@ export default function VendorStatus() {
 
                 {/* Documents Under Review - Show for documents_submitted status */}
                 {applicationData.status === 'documents_submitted' && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-                        <div className="text-center">
-                            <div className="text-4xl mb-4">⏳</div>
-                            <h3 className="text-lg font-semibold text-yellow-800 mb-2">Documents Under Review</h3>
-                            <p className="text-yellow-700 text-sm">
-                                Your Business Permit and Cedula are being reviewed by the admin.
-                                You will be notified once they are approved and you can proceed to account setup.
-                            </p>
-                        </div>
-                    </div>
+                    <>
+                        {/* Check if any raffle winner documents are rejected */}
+                        {(applicationData.business_permit_approved === false || applicationData.cedula_approved === false) ? (
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-8">
+                                <h2 className="text-xl font-semibold text-orange-800 mb-4">Action Required - Re-upload Documents</h2>
+                                <p className="text-orange-700 text-sm mb-4">
+                                    Some of your documents have been rejected and need to be re-uploaded. Please see the details below and re-upload the rejected documents.
+                                </p>
+
+                                <div className="space-y-4">
+                                    {applicationData.business_permit_approved === false && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1 mr-4">
+                                                    <h4 className="font-medium text-red-800">Business Permit</h4>
+                                                    <p className="text-sm text-red-600 mt-1">
+                                                        <strong>Rejection Reason:</strong> {applicationData.business_permit_rejection_reason}
+                                                    </p>
+                                                    <div className="mt-2 p-2 bg-blue-100 border border-blue-300 rounded">
+                                                        <p className="text-xs text-blue-700">
+                                                            <strong>Required:</strong> Clear photo of your valid Business Permit document
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Link
+                                                    to={`/raffle-winner-documents?app=${applicationData.application_number}`}
+                                                    className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg text-sm flex-shrink-0 transition-colors"
+                                                >
+                                                    Re-upload Document
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {applicationData.cedula_approved === false && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1 mr-4">
+                                                    <h4 className="font-medium text-red-800">Cedula (Community Tax Certificate)</h4>
+                                                    <p className="text-sm text-red-600 mt-1">
+                                                        <strong>Rejection Reason:</strong> {applicationData.cedula_rejection_reason}
+                                                    </p>
+                                                    <div className="mt-2 p-2 bg-blue-100 border border-blue-300 rounded">
+                                                        <p className="text-xs text-blue-700">
+                                                            <strong>Required:</strong> Clear photo of your valid Cedula (Community Tax Certificate)
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Link
+                                                    to={`/raffle-winner-documents?app=${applicationData.application_number}`}
+                                                    className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg text-sm flex-shrink-0 transition-colors"
+                                                >
+                                                    Re-upload Document
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-4 p-4 bg-orange-100 border border-orange-300 rounded-lg">
+                                    <h4 className="font-medium text-orange-800 mb-2">Important Notes:</h4>
+                                    <ul className="text-sm text-orange-700 space-y-1 list-disc list-inside">
+                                        <li>Upload photos of actual documents - not selfies or photos of yourself</li>
+                                        <li>Ensure documents are clear, readable, and well-lit</li>
+                                        <li>Make sure all information is visible and not cut off</li>
+                                        <li>After re-uploading, your documents will be reviewed again</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+                                <div className="text-center">
+                                    <div className="text-4xl mb-4">⏳</div>
+                                    <h3 className="text-lg font-semibold text-yellow-800 mb-2">Documents Under Review</h3>
+                                    <p className="text-yellow-700 text-sm">
+                                        Your Business Permit and Cedula are being reviewed by the admin.
+                                        You will be notified once they are approved and you can proceed to account setup.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* Documents Approved - Ready for Credential Setup */}

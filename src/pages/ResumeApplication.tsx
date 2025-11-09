@@ -49,6 +49,10 @@ export default function ResumeApplication() {
             } else if (application.status === 'approved_for_raffle') {
                 navigate('/vendor-application/completion')
             } else if (application.status === 'won_raffle') {
+                // Raffle winners need to submit Business Permit and Cedula
+                navigate(`/raffle-winner-documents?app=${application.application_number}`)
+            } else if (application.status === 'documents_submitted') {
+                // Documents submitted, show status page
                 navigate(`/vendor-status?app=${application.application_number}`)
             } else if (application.status === 'rejected') {
                 navigate('/vendor-application/rejected')

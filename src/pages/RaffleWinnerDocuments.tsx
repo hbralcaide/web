@@ -11,6 +11,10 @@ export default function RaffleWinnerDocuments() {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
 
+    // Preview and submission states
+    const [previewImage, setPreviewImage] = useState<{ type: 'business_permit' | 'cedula', url: string } | null>(null)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+
     // Camera states
     const [showCamera, setShowCamera] = useState<'business_permit' | 'cedula' | null>(null)
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
@@ -43,8 +47,8 @@ export default function RaffleWinnerDocuments() {
                 return
             }
 
-            // Only allow raffle winners to access this page
-            if (application.status !== 'won_raffle') {
+            // Allow raffle winners and those who have submitted documents (for resubmission)
+            if (application.status !== 'won_raffle' && application.status !== 'documents_submitted') {
                 setError('This page is only accessible to raffle winners')
                 return
             }
@@ -75,38 +79,13 @@ export default function RaffleWinnerDocuments() {
         }
 
         try {
-            setUploading(true)
             setError(null)
-            setSuccess(null)
 
-            // Convert file to base64
+            // Convert file to base64 for preview
             const reader = new FileReader()
-            reader.onload = async () => {
+            reader.onload = () => {
                 const base64String = reader.result as string
-
-                // Update the database
-                const updateField = documentType === 'business_permit' ? 'business_permit_document' : 'cedula_document'
-                const { error: updateError } = await (supabase as any)
-                    .from('vendor_applications')
-                    .update({
-                        [updateField]: base64String,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', applicationData.id)
-
-                if (updateError) {
-                    console.error('Error updating document:', updateError)
-                    setError('Failed to upload document. Please try again.')
-                    return
-                }
-
-                // Update local state
-                setApplicationData((prev: any) => ({
-                    ...prev,
-                    [updateField]: base64String
-                }))
-
-                setSuccess(`${documentType === 'business_permit' ? 'Business Permit' : 'Cedula'} uploaded successfully!`)
+                setPreviewImage({ type: documentType, url: base64String })
             }
 
             reader.onerror = () => {
@@ -114,6 +93,51 @@ export default function RaffleWinnerDocuments() {
             }
 
             reader.readAsDataURL(file)
+        } catch (error) {
+            console.error('Error uploading file:', error)
+            setError('Failed to process file. Please try again.')
+        }
+    }
+
+    const handleSubmitDocument = async () => {
+        if (!previewImage) return
+
+        try {
+            setUploading(true)
+            setError(null)
+
+            const documentType = previewImage.type
+            const updateField = documentType === 'business_permit' ? 'business_permit_document' : 'cedula_document'
+            const approvalField = documentType === 'business_permit' ? 'business_permit_approved' : 'cedula_approved'
+            const rejectionField = documentType === 'business_permit' ? 'business_permit_rejection_reason' : 'cedula_rejection_reason'
+            
+            const { error: updateError } = await (supabase as any)
+                .from('vendor_applications')
+                .update({
+                    [updateField]: previewImage.url,
+                    [approvalField]: null, // Reset to pending when resubmitting
+                    [rejectionField]: null, // Clear rejection reason
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', applicationData.id)
+
+            if (updateError) {
+                console.error('Error updating document:', updateError)
+                setError('Failed to upload document. Please try again.')
+                return
+            }
+
+            // Update local state
+            setApplicationData((prev: any) => ({
+                ...prev,
+                [updateField]: previewImage.url,
+                [approvalField]: null,
+                [rejectionField]: null
+            }))
+
+            // Clear preview and show success modal
+            setPreviewImage(null)
+            setShowSuccessModal(true)
         } catch (error) {
             console.error('Error uploading file:', error)
             setError('Failed to upload document. Please try again.')
@@ -173,37 +197,13 @@ export default function RaffleWinnerDocuments() {
             if (!blob) return
 
             try {
-                setUploading(true)
                 setError(null)
 
-                // Convert blob to base64
+                // Convert blob to base64 for preview
                 const reader = new FileReader()
-                reader.onload = async () => {
+                reader.onload = () => {
                     const base64String = reader.result as string
-
-                    // Update the database
-                    const updateField = showCamera === 'business_permit' ? 'business_permit_document' : 'cedula_document'
-                    const { error: updateError } = await (supabase as any)
-                        .from('vendor_applications')
-                        .update({
-                            [updateField]: base64String,
-                            updated_at: new Date().toISOString()
-                        })
-                        .eq('id', applicationData.id)
-
-                    if (updateError) {
-                        console.error('Error updating document:', updateError)
-                        setError('Failed to save photo. Please try again.')
-                        return
-                    }
-
-                    // Update local state
-                    setApplicationData((prev: any) => ({
-                        ...prev,
-                        [updateField]: base64String
-                    }))
-
-                    setSuccess(`${showCamera === 'business_permit' ? 'Business Permit' : 'Cedula'} photo captured successfully!`)
+                    setPreviewImage({ type: showCamera!, url: base64String })
                     stopCamera()
                 }
 
@@ -215,8 +215,6 @@ export default function RaffleWinnerDocuments() {
             } catch (error) {
                 console.error('Error capturing photo:', error)
                 setError('Failed to capture photo. Please try again.')
-            } finally {
-                setUploading(false)
             }
         }, 'image/jpeg', 0.8)
     }
@@ -394,30 +392,30 @@ export default function RaffleWinnerDocuments() {
 
                     {/* Documents Section */}
                     <div className="space-y-8">
-                        {/* Business Permit */}
-                        <div className="bg-white border border-gray-200 rounded-lg p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">Business Permit</h3>
-                                {getStatusBadge(businessPermitStatus.status)}
-                            </div>
-
-                            {businessPermitStatus.reason && (
-                                <div className="text-sm text-red-600 bg-red-50 p-3 rounded mb-4">
-                                    <strong>Rejection Reason:</strong> {businessPermitStatus.reason}
+                        {/* Business Permit - Only show if not approved */}
+                        {businessPermitStatus.status !== 'approved' && (
+                            <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-gray-800">Business Permit</h3>
+                                    {getStatusBadge(businessPermitStatus.status)}
                                 </div>
-                            )}
 
-                            {applicationData?.business_permit_document && (
-                                <div className="mb-4">
-                                    <img
-                                        src={applicationData.business_permit_document}
-                                        alt="Business Permit"
-                                        className="w-48 h-48 object-cover rounded border"
-                                    />
-                                </div>
-                            )}
+                                {businessPermitStatus.reason && (
+                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded mb-4">
+                                        <strong>Rejection Reason:</strong> {businessPermitStatus.reason}
+                                    </div>
+                                )}
 
-                            {businessPermitStatus.status !== 'approved' && (
+                                {applicationData?.business_permit_document && (
+                                    <div className="mb-4">
+                                        <img
+                                            src={applicationData.business_permit_document}
+                                            alt="Business Permit"
+                                            className="w-48 h-48 object-cover rounded border"
+                                        />
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Upload Business Permit Photo:
@@ -446,33 +444,33 @@ export default function RaffleWinnerDocuments() {
                                         </button>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Cedula */}
-                        <div className="bg-white border border-gray-200 rounded-lg p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">Cedula (Community Tax Certificate)</h3>
-                                {getStatusBadge(cedulaStatus.status)}
                             </div>
+                        )}
 
-                            {cedulaStatus.reason && (
-                                <div className="text-sm text-red-600 bg-red-50 p-3 rounded mb-4">
-                                    <strong>Rejection Reason:</strong> {cedulaStatus.reason}
+                        {/* Cedula - Only show if not approved */}
+                        {cedulaStatus.status !== 'approved' && (
+                            <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-gray-800">Cedula (Community Tax Certificate)</h3>
+                                    {getStatusBadge(cedulaStatus.status)}
                                 </div>
-                            )}
 
-                            {applicationData?.cedula_document && (
-                                <div className="mb-4">
-                                    <img
-                                        src={applicationData.cedula_document}
-                                        alt="Cedula"
-                                        className="w-48 h-48 object-cover rounded border"
-                                    />
-                                </div>
-                            )}
+                                {cedulaStatus.reason && (
+                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded mb-4">
+                                        <strong>Rejection Reason:</strong> {cedulaStatus.reason}
+                                    </div>
+                                )}
 
-                            {cedulaStatus.status !== 'approved' && (
+                                {applicationData?.cedula_document && (
+                                    <div className="mb-4">
+                                        <img
+                                            src={applicationData.cedula_document}
+                                            alt="Cedula"
+                                            className="w-48 h-48 object-cover rounded border"
+                                        />
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Upload Cedula Photo:
@@ -501,8 +499,8 @@ export default function RaffleWinnerDocuments() {
                                         </button>
                                     </div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Action Buttons */}
@@ -610,6 +608,74 @@ export default function RaffleWinnerDocuments() {
 
                         <div className="mt-4 text-sm text-gray-600 text-center">
                             <p>Position the document clearly in the camera view and click "Capture Photo"</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Preview Modal */}
+            {previewImage && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                                Preview {previewImage.type === 'business_permit' ? 'Business Permit' : 'Cedula'}
+                            </h2>
+                            <div className="mb-6">
+                                <img
+                                    src={previewImage.url}
+                                    alt="Preview"
+                                    className="w-full rounded-lg border border-gray-300"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    onClick={() => setPreviewImage(null)}
+                                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                    disabled={uploading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSubmitDocument}
+                                    disabled={uploading}
+                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {uploading ? (
+                                        <span className="flex items-center">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Submitting...
+                                        </span>
+                                    ) : (
+                                        'Submit Document'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Document Submitted!</h2>
+                            <p className="text-gray-600 mb-6">
+                                Your document has been successfully submitted and is now waiting for admin review.
+                            </p>
+                            <Link
+                                to="/"
+                                className="inline-block w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
+                            >
+                                Go to Home
+                            </Link>
                         </div>
                     </div>
                 </div>

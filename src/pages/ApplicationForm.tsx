@@ -523,34 +523,57 @@ export default function ApplicationForm() {
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Application Form - ${applicationData?.first_name || 'Applicant'} ${applicationData?.last_name || ''}</title>
                     <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 20px; 
-                            line-height: 1.5;
-                            font-size: 14px;
+                        @page {
+                            size: legal;
+                            margin: 0.75in 1in;
                         }
-                        .header { text-align: center; margin-bottom: 30px; }
-                        .form-section { margin-bottom: 20px; }
-                        .field { margin-bottom: 10px; }
-                        .signature-section { margin-top: 40px; }
-                        .conditions { margin: 20px 0; }
-                        .condition { margin-bottom: 10px; }
-                        @media print { 
-                            body { margin: 0; }
-                            @page { margin: 0.5in; }
+                        body { 
+                            font-family: 'Times New Roman', Times, serif; 
+                            margin: 0;
+                            padding: 0;
+                            line-height: 1.4;
+                            font-size: 11pt;
+                        }
+                        p {
+                            margin: 8px 0;
+                        }
+                        .conditions {
+                            margin-left: 20px;
+                        }
+                        .condition {
+                            margin-bottom: 6px;
+                        }
+                        .signature-line {
+                            border-bottom: 1px solid black;
+                            display: inline-block;
+                            min-width: 200px;
+                            text-align: center;
+                        }
+                        .date-right {
+                            text-align: right;
+                            margin-bottom: 15px;
+                        }
+                        .header-left {
+                            margin-bottom: 15px;
+                        }
+                        .signature-section {
+                            margin-top: 20px;
+                            text-align: right;
+                        }
+                        @media print {
+                            body {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            @page {
+                                size: legal;
+                                margin: 0.75in 1in;
+                            }
                         }
                     </style>
                 </head>
                 <body>
                     ${generateApplicationFormHTML()}
-                    <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f3f4f6; border-radius: 8px;">
-                        <p style="margin-bottom: 10px;">To print this document:</p>
-                        <ol style="text-align: left; display: inline-block;">
-                            <li>Tap the menu button (⋮) in your browser</li>
-                            <li>Select "Print" or "Save as PDF"</li>
-                            <li>Choose your printer or save as PDF</li>
-                        </ol>
-                    </div>
                 </body>
                 </html>
             `
@@ -569,9 +592,6 @@ export default function ApplicationForm() {
             
             // Clean up the URL object
             setTimeout(() => URL.revokeObjectURL(url), 100)
-            
-            // Show instructions
-            alert('The application form has been downloaded. Open the file and use your browser\'s print function to save as PDF or print.')
         } else {
             // Desktop: Use the original window.open() method
             const printWindow = window.open('', '_blank')
@@ -582,21 +602,52 @@ export default function ApplicationForm() {
                     <head>
                         <title>Application Form - ${applicationData?.first_name || 'Applicant'} ${applicationData?.last_name || ''}</title>
                         <style>
-                            body { 
-                                font-family: Arial, sans-serif; 
-                                margin: 20px; 
-                                line-height: 1.5;
-                                font-size: 14px;
+                            @page {
+                                size: legal;
+                                margin: 0.75in 1in;
                             }
-                            .header { text-align: center; margin-bottom: 30px; }
-                            .form-section { margin-bottom: 20px; }
-                            .field { margin-bottom: 10px; }
-                            .signature-section { margin-top: 40px; }
-                            .conditions { margin: 20px 0; }
-                            .condition { margin-bottom: 10px; }
-                            @media print { 
-                                body { margin: 0; }
-                                @page { margin: 0.5in; }
+                            body { 
+                                font-family: 'Times New Roman', Times, serif; 
+                                margin: 0;
+                                padding: 0;
+                                line-height: 1.4;
+                                font-size: 11pt;
+                            }
+                            p {
+                                margin: 8px 0;
+                            }
+                            .conditions {
+                                margin-left: 20px;
+                            }
+                            .condition {
+                                margin-bottom: 6px;
+                            }
+                            .signature-line {
+                                border-bottom: 1px solid black;
+                                display: inline-block;
+                                min-width: 200px;
+                                text-align: center;
+                            }
+                            .date-right {
+                                text-align: right;
+                                margin-bottom: 15px;
+                            }
+                            .header-left {
+                                margin-bottom: 15px;
+                            }
+                            .signature-section {
+                                margin-top: 20px;
+                                text-align: right;
+                            }
+                            @media print {
+                                body {
+                                    margin: 0;
+                                    padding: 0;
+                                }
+                                @page {
+                                    size: legal;
+                                    margin: 0.75in 1in;
+                                }
                             }
                         </style>
                     </head>
@@ -606,10 +657,6 @@ export default function ApplicationForm() {
                             // Auto-print when page loads
                             window.onload = function() {
                                 window.print();
-                                // Close window after printing/downloading
-                                setTimeout(function() {
-                                    window.close();
-                                }, 1000);
                             };
                         </script>
                     </body>
@@ -624,105 +671,81 @@ export default function ApplicationForm() {
         if (!applicationData) return ''
 
         return `
-        <div style="font-family: Arial, sans-serif; line-height: 1.5; font-size: 14px;">
-            <div style="text-align: right;">
+        <div style="font-family: 'Times New Roman', Times, serif; line-height: 1.4; font-size: 11pt;">
+            <div class="date-right">
                 <div>${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: '2-digit' }).toUpperCase()}</div>
-                <div style="display: inline-block;">
-                    <div>___________________</div>
-                    <div style="text-align: center;">Date</div>
+                <div style="display: inline-block; margin-top: 5px;">
+                    <span class="signature-line" style="min-width: 150px;">&nbsp;</span>
+                    <div style="text-align: center; font-size: 10pt; margin-top: 2px;">Date</div>
                 </div>
             </div>
     
-            <div style="text-align: left; margin-top: 10px;">
-                <h3 style="margin: 0;">THE CITY ADMINISTRATOR</h3>
-                <p style="margin: 0;">Davao City</p>
+            <div class="header-left">
+                <strong>THE CITY ADMINISTRATOR</strong><br/>
+                Davao City
             </div>
     
             <p>Sir/Madam:</p>
     
-            <p style="text-indent: 40px;">
+            <p style="text-indent: 40px; text-align: justify;">
                 I, <strong><u>${applicationData.first_name || '______'} ${applicationData.middle_name || ''} ${applicationData.last_name || '______'}</u></strong>, <strong><u>${applicationData.age || '______'}</u></strong> years old, Filipino Citizen, 
                 <strong><u>${applicationData.marital_status === 'Married' && applicationData.spouse_name ? 'married to ' + applicationData.spouse_name : applicationData.marital_status?.toLowerCase() || 'single'}</u></strong> and residing at 
-                <strong><u>${applicationData.complete_address || '______'}</u></strong>, hereby apply for the lease of market stall/booth No. <strong><u>${selectedStall?.stall_number || '______'}</u></strong>, MB <strong><u>2</u></strong>, <strong><u>${selectedStall?.section_name || '______'}</u></strong>
-                Section of Toril Public Market.
+                <strong><u>${applicationData.complete_address || '______'}</u></strong>, hereby apply for the lease of market stall/booth No. <strong><u>${selectedStall?.stall_number || '______'}</u></strong>, MB <strong><u>2</u></strong>, <strong><u>${selectedStall?.section_name || '______'}</u></strong> Section of Toril Public Market.
             </p>
     
-            <p style="text-indent: 40px;">
-                Should the above-mentioned stall/booth be leased to me in accordance with the market rules 
-                and regulations, I promise to hold the same under the following conditions:
+            <p style="text-indent: 40px; text-align: justify;">
+                Should the above-mentioned stall/booth be leased to me in accordance with the market rules and regulations, I promise to hold the same under the following conditions:
             </p>
     
-            <div style="margin-left: 20px;">
-                <p style="margin-bottom: 10px; text-indent: 0;">
-                    <strong>1.</strong> That, while I am occupying or leasing this stall/booth, I shall at all times have my picture 
-                    and that of my helper (or those of my helpers) conveniently framed and hung-up conspicuously in this stall;
-                </p>
-                <p style="margin-bottom: 10px; text-indent: 0;">
-                    <strong>2.</strong> That I shall keep the stall/booth at all times in good sanitary conditions and comply strictly with all sanitary and market rules and regulations now existing or which may hereafter be promulgated;
-                </p>
-                <p style="margin-bottom: 10px; text-indent: 0;">
-                    <strong>3.</strong> I shall pay the corresponding rents for the stall/booth or fees for the stall/booth, including business permit or license and taxes in the manner prescribed by existing ordinances;
-                </p>
-                <p style="margin-bottom: 10px; text-indent: 0;">
-                    <strong>4.</strong> The business to be conducted in the stall/booth shall belong exclusively to me;
-                </p>
-                <p style="margin-bottom: 10px; text-indent: 0;">
-                    <strong>5.</strong> In case I engaged helpers, I shall nevertheless personally conduct my business and be present at the stall/booth. I shall promptly notify the market authorities of my absence giving my reason or reasons thereof;
-                </p>
-                <p style="margin-bottom: 10px; text-indent: 0; font-style: italic;">
-                    <strong>6.</strong> I shall not lease/occupy more than one (1) stall/booth in a particular market;
-                </p>
-                <p style="margin-bottom: 10px; text-indent: 0;">
-                    <strong>7.</strong> I shall not sell or transfer my privilege to the stall/booth or permit another person to conduct business therein without the approval from the Market Committee;
-                </p>
-                <p style="margin-bottom: 10px; text-indent: 0;">
-                    <strong>8.</strong> Any violation on my part or on the part of my helpers of the foregoing conditions shall be sufficient cause for market authorities to cancel the Contract of Lease;
-                </p>
-            </div>
-
-            <div style="text-align: right;">
-                <div>Very truly yours, </div>
-                <div style="display: inline-block;">
-                    <div>___________________</div>
-                    <div style="text-align: center;">Applicant</div>
-                </div>
-            </div>
-
-            <p style="text-indent: 40px;">
-                I, <strong><u>${applicationData.first_name || '______'} ${applicationData.middle_name || ''} ${applicationData.last_name || '______'}</u></strong>, do hereby state that I am the person who signed the foregoing 
-                statement/application; that I have read the same and that the contents thereof are true to the 
-                best of my knowledge.
-            </p>
-
-            <div style="text-align: right;">          
-                <div style="display: inline-block;">
-                    <div>_____________________</div>
-                    <div style="text-align: center;">Affiant</div>
-                </div>
+            <div class="conditions">
+                <p class="condition"><strong>1.</strong> That, while I am occupying or leasing this stall/booth, I shall at all times have my picture and that of my helper (or those of my helpers) conveniently framed and hung-up conspicuously in this stall;</p>
+                <p class="condition"><strong>2.</strong> That I shall keep the stall/booth at all times in good sanitary conditions and comply strictly with all sanitary and market rules and regulations now existing or which may hereafter be promulgated;</p>
+                <p class="condition"><strong>3.</strong> I shall pay the corresponding rents for the stall/booth or fees for the stall/booth, including business permit or license and taxes in the manner prescribed by existing ordinances;</p>
+                <p class="condition"><strong>4.</strong> The business to be conducted in the stall/booth shall belong exclusively to me;</p>
+                <p class="condition"><strong>5.</strong> In case I engaged helpers, I shall nevertheless personally conduct my business and be present at the stall/booth. I shall promptly notify the market authorities of my absence giving my reason or reasons thereof;</p>
+                <p class="condition" style="font-style: italic;"><strong>6.</strong> I shall not lease/occupy more than one (1) stall/booth in a particular market;</p>
+                <p class="condition"><strong>7.</strong> I shall not sell or transfer my privilege to the stall/booth or permit another person to conduct business therein without the approval from the Market Committee;</p>
+                <p class="condition"><strong>8.</strong> Any violation on my part or on the part of my helpers of the foregoing conditions shall be sufficient cause for market authorities to cancel the Contract of Lease;</p>
             </div>
     
-        
-              
-            <p>
-                SUBSCRIBED AND SWORN TO before me in the City of Davao, Philippines, this ___ day of __________, 20___, 
-                affiant exhibited to me his/her Community Tax Certificate No. ______ issued at __________ on __________, 20___.
-            </p>
-
-            <div style="text-align: right;">          
-                <div style="display: inline-block;">
-                    <div>_____________________</div>
-                    <div style="text-align: center;">Notary Public</div>
+            <div class="signature-section">
+                <p style="margin-bottom: 5px;">Very truly yours,</p>
+                <div style="display: inline-block; margin-top: 15px;">
+                    <span class="signature-line" style="min-width: 250px; border-bottom: 1px solid black; display: inline-block; text-align: center;">${applicationData.first_name || ''} ${applicationData.middle_name || ''} ${applicationData.last_name || ''}</span>
+                    <div style="text-align: center; font-size: 10pt; margin-top: 2px;">Applicant</div>
                 </div>
-            </div>       
-    
+            </div>
             
-            <p style="margin: 2px 0;">Doc. No. ______</p>
-            <p style="margin: 2px 0;">Page No. ______</p>
-            <p style="margin: 2px 0;">Book No. ______</p>
-            <p style="margin: 2px 0;">Series of 20____</p>
+            <p style="text-indent: 40px; text-align: justify; margin-top: 15px;">
+                I, <strong><u>${applicationData.first_name || '______'} ${applicationData.middle_name || ''} ${applicationData.last_name || '______'}</u></strong>, do hereby state that I am the person who signed the foregoing statement/application; that I have read the same and that the contents thereof are true to the best of my knowledge.
+            </p>
+    
+            <div class="signature-section">
+                <div style="display: inline-block; margin-top: 10px;">
+                    <span class="signature-line" style="min-width: 250px; border-bottom: 1px solid black; display: inline-block; text-align: center;">${applicationData.first_name || ''} ${applicationData.middle_name || ''} ${applicationData.last_name || ''}</span>
+                    <div style="text-align: center; font-size: 10pt; margin-top: 2px;">Affiant</div>
+                </div>
+            </div>
+    
+            <p style="margin-top: 20px; text-align: justify;">
+                SUBSCRIBED AND SWORN TO before me in the City of Davao, Philippines, this ___ day of __________, 20___, affiant exhibited to me his/her Community Tax Certificate No. ______ issued at __________ on __________, 20___.
+            </p>
+    
+            <div class="signature-section">
+                <div style="display: inline-block; margin-top: 10px;">
+                    <span class="signature-line" style="min-width: 200px;">&nbsp;</span>
+                    <div style="text-align: center; font-size: 10pt; margin-top: 2px;">Notary Public</div>
+                </div>
+            </div>
+    
+            <div style="margin-top: 20px; font-size: 10pt;">
+                <p style="margin: 2px 0;">Doc. No. _____</p>
+                <p style="margin: 2px 0;">Page No. _____</p>
+                <p style="margin: 2px 0;">Book No. _____</p>
+                <p style="margin: 2px 0;">Series of 20___</p>
+            </div>
         </div>
-    `;
-
+        `
     }
 
 

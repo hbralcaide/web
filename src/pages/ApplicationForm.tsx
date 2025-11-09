@@ -510,13 +510,17 @@ export default function ApplicationForm() {
     }
 
     const handleDownload = () => {
-        // Create a new window with the form content
-        const printWindow = window.open('', '_blank')
-        if (printWindow) {
-            printWindow.document.write(`
+        // Check if we're on a mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        
+        if (isMobile) {
+            // For mobile: Create a blob and download as HTML
+            const htmlContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Application Form - ${applicationData?.first_name || 'Applicant'} ${applicationData?.last_name || ''}</title>
                     <style>
                         body { 
@@ -539,20 +543,80 @@ export default function ApplicationForm() {
                 </head>
                 <body>
                     ${generateApplicationFormHTML()}
-                    <script>
-                        // Auto-print when page loads
-                        window.onload = function() {
-                            window.print();
-                            // Close window after printing/downloading
-                            setTimeout(function() {
-                                window.close();
-                            }, 1000);
-                        };
-                    </script>
+                    <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f3f4f6; border-radius: 8px;">
+                        <p style="margin-bottom: 10px;">To print this document:</p>
+                        <ol style="text-align: left; display: inline-block;">
+                            <li>Tap the menu button (⋮) in your browser</li>
+                            <li>Select "Print" or "Save as PDF"</li>
+                            <li>Choose your printer or save as PDF</li>
+                        </ol>
+                    </div>
                 </body>
                 </html>
-            `)
-            printWindow.document.close()
+            `
+            
+            // Create a blob from the HTML content
+            const blob = new Blob([htmlContent], { type: 'text/html' })
+            const url = URL.createObjectURL(blob)
+            
+            // Create a temporary link and trigger download
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `Application_Form_${applicationData?.first_name || 'Applicant'}_${applicationData?.last_name || ''}_${new Date().getTime()}.html`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            
+            // Clean up the URL object
+            setTimeout(() => URL.revokeObjectURL(url), 100)
+            
+            // Show instructions
+            alert('The application form has been downloaded. Open the file and use your browser\'s print function to save as PDF or print.')
+        } else {
+            // Desktop: Use the original window.open() method
+            const printWindow = window.open('', '_blank')
+            if (printWindow) {
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Application Form - ${applicationData?.first_name || 'Applicant'} ${applicationData?.last_name || ''}</title>
+                        <style>
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                margin: 20px; 
+                                line-height: 1.5;
+                                font-size: 14px;
+                            }
+                            .header { text-align: center; margin-bottom: 30px; }
+                            .form-section { margin-bottom: 20px; }
+                            .field { margin-bottom: 10px; }
+                            .signature-section { margin-top: 40px; }
+                            .conditions { margin: 20px 0; }
+                            .condition { margin-bottom: 10px; }
+                            @media print { 
+                                body { margin: 0; }
+                                @page { margin: 0.5in; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${generateApplicationFormHTML()}
+                        <script>
+                            // Auto-print when page loads
+                            window.onload = function() {
+                                window.print();
+                                // Close window after printing/downloading
+                                setTimeout(function() {
+                                    window.close();
+                                }, 1000);
+                            };
+                        </script>
+                    </body>
+                    </html>
+                `)
+                printWindow.document.close()
+            }
         }
     }
 

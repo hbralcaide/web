@@ -84,11 +84,11 @@ export default function ApplicationPending() {
             {/* Header */}
             <header className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 space-y-2 sm:space-y-0">
                         <div className="flex items-center">
-                            <h1 className="text-2xl font-bold text-gray-900">Application Status</h1>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Application Status</h1>
                         </div>
-                        <Link to="/" className="text-gray-600 hover:text-gray-900">
+                        <Link to="/" className="text-gray-600 hover:text-gray-900 text-sm sm:text-base">
                             ← Back to Home
                         </Link>
                     </div>
@@ -96,28 +96,28 @@ export default function ApplicationPending() {
             </header>
 
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-8">
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-4 sm:p-8">
                     {/* Status Header */}
-                    <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="text-center mb-6 sm:mb-8">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-7 h-7 sm:w-8 sm:h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Application Under Review</h2>
-                        <p className="text-lg text-gray-600">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Application Under Review</h2>
+                        <p className="text-base sm:text-lg text-gray-600">
                             Your application is being reviewed by our admin team
                         </p>
                     </div>
 
                     {/* Application Details */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Application Details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Application Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-sm">
                             <div className="md:col-span-2">
                                 <span className="font-medium text-gray-600">Application Number:</span>
-                                <span className="ml-2 text-gray-900 font-mono bg-gray-100 px-3 py-2 rounded text-lg font-bold">
+                                <span className="ml-2 text-gray-900 font-mono bg-gray-100 px-2 sm:px-3 py-1 sm:py-2 rounded text-base sm:text-lg font-bold break-all">
                                     {applicationData.application_number || 'N/A'}
                                 </span>
                             </div>
@@ -137,16 +137,16 @@ export default function ApplicationPending() {
                     </div>
 
                     {/* Status Information */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                        <h3 className="text-lg font-semibold text-blue-900 mb-4">What happens next?</h3>
-                        <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+                        <h3 className="text-base sm:text-lg font-semibold text-blue-900 mb-3 sm:mb-4">What happens next?</h3>
+                        <div className="space-y-3 sm:space-y-4">
                             <div className="flex items-start">
                                 <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
                                     <span className="text-blue-600 text-sm font-semibold">1</span>
                                 </div>
                                 <div>
-                                    <h4 className="font-medium text-blue-900">Admin Review</h4>
-                                    <p className="text-blue-700 text-sm">Our admin team will review your application and documents within 3-5 business days.</p>
+                                    <h4 className="font-medium text-blue-900 text-sm sm:text-base">Admin Review</h4>
+                                    <p className="text-blue-700 text-xs sm:text-sm">Our admin team will review your application and documents within 3-5 business days.</p>
                                 </div>
                             </div>
                             <div className="flex items-start">
@@ -154,8 +154,8 @@ export default function ApplicationPending() {
                                     <span className="text-blue-600 text-sm font-semibold">2</span>
                                 </div>
                                 <div>
-                                    <h4 className="font-medium text-blue-900">Notification</h4>
-                                    <p className="text-blue-700 text-sm">You will be notified via phone call or email about the decision.</p>
+                                    <h4 className="font-medium text-blue-900 text-sm sm:text-base">Notification</h4>
+                                    <p className="text-blue-700 text-xs sm:text-sm">You will be notified via phone call or email about the decision.</p>
                                 </div>
                             </div>
                             <div className="flex items-start">
@@ -163,17 +163,17 @@ export default function ApplicationPending() {
                                     <span className="text-blue-600 text-sm font-semibold">3</span>
                                 </div>
                                 <div>
-                                    <h4 className="font-medium text-blue-900">Next Steps</h4>
-                                    <p className="text-blue-700 text-sm">If approved, you'll receive instructions for payment and stall assignment.</p>
+                                    <h4 className="font-medium text-blue-900 text-sm sm:text-base">Next Steps</h4>
+                                    <p className="text-blue-700 text-xs sm:text-sm">If approved, you'll receive instructions for payment and stall assignment.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Contact Information */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Need Help?</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Need Help?</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <h4 className="font-medium text-gray-700 mb-2">Contact Information</h4>
                                 <p className="text-gray-600 text-sm">Phone: (123) 456-7890</p>

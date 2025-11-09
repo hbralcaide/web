@@ -290,15 +290,15 @@ export default function PersonalInfoForm() {
             {/* Header */}
             <header className="bg-gray-800 text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center py-4">
+                    <div className="flex items-center py-3 sm:py-4">
                         <div className="flex items-center">
-                            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
-                                <span className="text-white font-bold text-lg">M</span>
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-700 rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                                <span className="text-white font-bold text-base sm:text-lg">M</span>
                             </div>
                             <div>
-                                <div className="text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
-                                <div className="text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
-                                <div className="text-xs">TORIL PUBLIC MARKET - MAPALENGKE</div>
+                                <div className="text-sm sm:text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
+                                <div className="text-xs sm:text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
+                                <div className="text-xs hidden sm:block">TORIL PUBLIC MARKET - MAPALENGKE</div>
                             </div>
                         </div>
                     </div>
@@ -308,8 +308,8 @@ export default function PersonalInfoForm() {
             {/* Secondary Header */}
             <div className="bg-gray-700 text-white py-2">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-xl font-semibold">Step 1: Personal Information</h1>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                        <h1 className="text-lg sm:text-xl font-semibold">Step 1: Personal Information</h1>
                         <Link
                             to="/vendor-application"
                             className="text-sm text-gray-300 hover:text-white transition-colors"
@@ -320,8 +320,8 @@ export default function PersonalInfoForm() {
                 </div>
             </div>
 
-            {/* Progress Bar */}
-            <div className="bg-white border-b border-gray-200">
+            {/* Progress Bar - Hidden on mobile, visible on tablet+ */}
+            <div className="hidden md:block bg-white border-b border-gray-200">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -357,16 +357,31 @@ export default function PersonalInfoForm() {
                 </div>
             </div>
 
+            {/* Mobile Progress Indicator */}
+            <div className="md:hidden bg-white border-b border-gray-200">
+                <div className="max-w-4xl mx-auto px-4 py-3">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-800">Step 1 of 6</span>
+                        <div className="flex-1 mx-4">
+                            <div className="h-2 bg-gray-200 rounded-full">
+                                <div className="h-2 bg-gray-800 rounded-full" style={{ width: '16.66%' }}></div>
+                            </div>
+                        </div>
+                        <span className="text-sm text-gray-600">Personal Info</span>
+                    </div>
+                </div>
+            </div>
+
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-8">
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Personal Information</h2>
-                        <p className="text-gray-600">Please provide your personal details for the vendor application.</p>
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-4 sm:p-8">
+                    <div className="mb-6 sm:mb-8">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Personal Information</h2>
+                        <p className="text-sm sm:text-base text-gray-600">Please provide your personal details for the vendor application.</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                             <div>
                                 <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
                                     First Name *
@@ -644,16 +659,16 @@ export default function PersonalInfoForm() {
                             <p className="mt-1 text-sm text-gray-500">Leave blank if you will be the actual occupant</p>
                         </div>
 
-                        <div className="flex justify-end space-x-4 pt-6">
+                        <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4 sm:pt-6">
                             <button
                                 onClick={handleBack}
-                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                                className="w-full sm:w-auto px-6 py-3 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 active:scale-95 transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
-                                className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                className="w-full sm:w-auto px-6 py-3 sm:py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 active:scale-95 transition-all"
                             >
                                 Next: Take Photo
                             </button>

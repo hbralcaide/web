@@ -656,36 +656,24 @@ export default function Vendors() {
                 console.log('Fetched updated app data:', { updatedApp, fetchError });
 
                 if (!fetchError && updatedApp.business_permit_approved && updatedApp.cedula_approved) {
-                    console.log('Both documents approved, updating status to activated');
+                    console.log('Both documents approved, updating status to documents_approved');
 
-                    // Update vendor application status to 'activated'
+                    // Update vendor application status to 'documents_approved' so vendor can see credentials
                     const { error: statusUpdateError } = await (supabase as any)
                         .from('vendor_applications')
-                        .update({ status: 'Active' })
+                        .update({ status: 'documents_approved' })
                         .eq('id', vendorDocuments.application.id);
 
                     if (statusUpdateError) {
-                        console.error('Error updating status to Active:', statusUpdateError);
+                        console.error('Error updating status to documents_approved:', statusUpdateError);
                     } else {
-                        console.log('Status successfully updated to Active in vendor_applications');
-                    }
-
-                    // Update vendor profile status to 'Active'
-                    const { error: profileStatusUpdateError } = await (supabase as any)
-                        .from('vendor_profiles')
-                        .update({ status: 'Active' })
-                        .eq('vendor_application_id', vendorDocuments.application.id);
-
-                    if (profileStatusUpdateError) {
-                        console.error('Error updating vendor profile status to Active:', profileStatusUpdateError);
-                    } else {
-                        console.log('Vendor profile status successfully updated to Active');
+                        console.log('Status successfully updated to documents_approved in vendor_applications');
                     }
 
                     setApprovalModalData({
                         type: 'success',
                         title: 'Success',
-                        message: `All documents approved and vendor profile created! ${vendorDocuments.application.first_name} ${vendorDocuments.application.last_name} is now an active vendor and can access their account.`
+                        message: `All documents approved! ${vendorDocuments.application.first_name} ${vendorDocuments.application.last_name} can now set up their account credentials.`
                     });
                 } else {
                     console.warn('Condition not met for status update to Active:', {

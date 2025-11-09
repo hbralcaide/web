@@ -338,15 +338,15 @@ export default function PhotoBirthCert() {
             {/* Header */}
             <header className="bg-gray-800 text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center py-4">
+                    <div className="flex items-center py-3 sm:py-4">
                         <div className="flex items-center">
-                            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
-                                <span className="text-white font-bold text-lg">M</span>
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-700 rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                                <span className="text-white font-bold text-base sm:text-lg">M</span>
                             </div>
                             <div>
-                                <div className="text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
-                                <div className="text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
-                                <div className="text-xs">TORIL PUBLIC MARKET - MAPALENGKE</div>
+                                <div className="text-sm sm:text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
+                                <div className="text-xs sm:text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
+                                <div className="text-xs hidden sm:block">TORIL PUBLIC MARKET - MAPALENGKE</div>
                             </div>
                         </div>
                     </div>

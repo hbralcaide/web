@@ -22,7 +22,7 @@ interface VendorApplication {
     assigned_stall_id?: string;
     assigned_section_name?: string;
     stall_applications?: StallApplication[];
-    status?: 'won_raffle' | 'documents_submitted' | 'activated';
+    status?: 'won_raffle' | 'documents_submitted' | 'documents_approved' | 'activated';
     person_photo_approved?: boolean;
     person_photo_rejection_reason?: string;
     barangay_clearance_approved?: boolean;
@@ -47,9 +47,21 @@ interface VendorApplication {
 interface Application {
     id: string;
     application_number: string;
+    first_name?: string;
+    middle_name?: string;
+    last_name?: string;
+    complete_address?: string;
+    age?: number;
+    business_name?: string;
+    phone_number?: string;
+    actual_occupant_first_name?: string;
+    actual_occupant_last_name?: string;
+    actual_occupant_phone?: string;
     assigned_stall_id?: string;
     assigned_section_name?: string;
-    status?: 'won_raffle' | 'documents_submitted' | 'activated';
+    status?: 'won_raffle' | 'documents_submitted' | 'documents_approved' | 'activated';
+    username?: string;
+    activated_at?: string;
     person_photo_approved?: boolean;
     person_photo_rejection_reason?: string;
     barangay_clearance_approved?: boolean;
@@ -429,6 +441,7 @@ export default function VendorStatus() {
                 .update({
                     status: 'activated',
                     username: usernameToUse,
+                    activated_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', applicationData.id)
@@ -495,12 +508,20 @@ export default function VendorStatus() {
                     id,
                     application_number,
                     first_name,
+                    middle_name,
                     last_name,
                     complete_address,
                     age,
                     assigned_stall_id,
                     assigned_section_name,
                     status,
+                    username,
+                    activated_at,
+                    business_name,
+                    phone_number,
+                    actual_occupant_first_name,
+                    actual_occupant_last_name,
+                    actual_occupant_phone,
                     person_photo_approved,
                     person_photo_rejection_reason,
                     barangay_clearance_approved,
@@ -1092,47 +1113,131 @@ export default function VendorStatus() {
 
                 {/* Documents Approved - Ready for Credential Setup */}
                 {applicationData.status === 'documents_approved' && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                        <div className="text-center">
-                            <div className="text-4xl mb-4">🎉</div>
-                            <h3 className="text-lg font-semibold text-green-800 mb-2">Documents Approved!</h3>
-                            <p className="text-green-700 text-sm mb-4">
-                                Congratulations! Your Business Permit and Cedula have been approved.
-                                You can now set up your account credentials to access the mobile app.
-                            </p>
-                            <button
-                                onClick={async () => {
-                                    await generateUsername(applicationData.first_name, applicationData.last_name)
-                                    setShowCredentialModal(true)
-                                }}
-                                className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                            >
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                Set Up Account Credentials
-                            </button>
+                    <>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+                            <div className="text-center">
+                                <div className="text-4xl mb-4">🎉</div>
+                                <h3 className="text-lg font-semibold text-green-800 mb-2">Documents Approved!</h3>
+                                <p className="text-green-700 text-sm mb-4">
+                                    Congratulations! Your Business Permit and Cedula have been approved.
+                                    You can now set up your account credentials to access the mobile app.
+                                </p>
+                                <button
+                                    onClick={async () => {
+                                        await generateUsername(applicationData.first_name, applicationData.last_name)
+                                        setShowCredentialModal(true)
+                                    }}
+                                    className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    Set Up Account Credentials
+                                </button>
+                            </div>
                         </div>
-                    </div>
+
+                        {/* Show Vendor Credentials */}
+                        <div className="bg-white border border-gray-300 rounded-lg p-6 mb-8">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Vendor Information</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Primary Vendor</p>
+                                    <p className="text-base font-semibold text-gray-900">
+                                        {applicationData.first_name} {applicationData.middle_name} {applicationData.last_name}
+                                    </p>
+                                </div>
+                                {applicationData.actual_occupant_first_name && applicationData.actual_occupant_last_name && (
+                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                        <p className="text-sm font-medium text-blue-600 mb-1">Actual Occupant</p>
+                                        <p className="text-base font-semibold text-blue-900">
+                                            {applicationData.actual_occupant_first_name} {applicationData.actual_occupant_last_name}
+                                        </p>
+                                        {applicationData.actual_occupant_phone && (
+                                            <p className="text-sm text-blue-700 mt-1">
+                                                📱 {applicationData.actual_occupant_phone}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Business Name</p>
+                                    <p className="text-base font-semibold text-gray-900">
+                                        {applicationData.business_name || 'N/A'}
+                                    </p>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Contact Number</p>
+                                    <p className="text-base font-semibold text-gray-900">
+                                        {applicationData.phone_number || 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </>
                 )}
 
                 {/* Certificate Activated - Show for activated status */}
                 {applicationData.status === 'activated' && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                        <div className="text-center">
-                            <div className="text-4xl mb-4">✅</div>
-                            <h3 className="text-lg font-semibold text-green-800 mb-2">Certificate Activated</h3>
-                            <p className="text-green-700 text-sm mb-4">
-                                Your vendor certificate is now fully activated! You can access the mobile app and start managing your stall.
-                            </p>
-                            <div className="bg-green-100 border border-green-300 rounded-lg p-4">
-                                <p className="text-green-800 text-sm font-medium">Mobile App Access:</p>
-                                <p className="text-green-700 text-sm mt-1">
-                                    Use your credentials to log in to the Mapalengke mobile app and start operating your stall.
+                    <>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+                            <div className="text-center">
+                                <div className="text-4xl mb-4">✅</div>
+                                <h3 className="text-lg font-semibold text-green-800 mb-2">Certificate Activated</h3>
+                                <p className="text-green-700 text-sm mb-4">
+                                    Your vendor certificate is now fully activated! You can access the mobile app and start managing your stall.
                                 </p>
+                                <div className="bg-green-100 border border-green-300 rounded-lg p-4">
+                                    <p className="text-green-800 text-sm font-medium mb-2">Mobile App Login Credentials:</p>
+                                    <div className="bg-white rounded-lg p-3 mb-2">
+                                        <p className="text-xs text-gray-600 mb-1">Username:</p>
+                                        <p className="text-base font-mono font-bold text-green-800">{applicationData.username || 'N/A'}</p>
+                                    </div>
+                                    <p className="text-green-700 text-xs mt-2">
+                                        Use this username and your password to log in to the Mapalengke mobile app.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+
+                        {/* Show Vendor Credentials for Activated Status */}
+                        <div className="bg-white border border-gray-300 rounded-lg p-6 mb-8">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Vendor Information</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Primary Vendor</p>
+                                    <p className="text-base font-semibold text-gray-900">
+                                        {applicationData.first_name} {applicationData.middle_name} {applicationData.last_name}
+                                    </p>
+                                </div>
+                                {applicationData.actual_occupant_first_name && applicationData.actual_occupant_last_name && (
+                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                        <p className="text-sm font-medium text-blue-600 mb-1">Actual Occupant</p>
+                                        <p className="text-base font-semibold text-blue-900">
+                                            {applicationData.actual_occupant_first_name} {applicationData.actual_occupant_last_name}
+                                        </p>
+                                        {applicationData.actual_occupant_phone && (
+                                            <p className="text-sm text-blue-700 mt-1">
+                                                📱 {applicationData.actual_occupant_phone}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Business Name</p>
+                                    <p className="text-base font-semibold text-gray-900">
+                                        {applicationData.business_name || 'N/A'}
+                                    </p>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Contact Number</p>
+                                    <p className="text-base font-semibold text-gray-900">
+                                        {applicationData.phone_number || 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </>
                 )}
             </div>
         )
@@ -1175,13 +1280,13 @@ export default function VendorStatus() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center py-4">
                         <div className="flex items-center">
-                            <a href="/" className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
-                                <span className="text-white font-bold text-lg">M</span>
+                            <a href="/" className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-700 rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+                                <span className="text-white font-bold text-sm sm:text-lg">M</span>
                             </a>
                             <div>
-                                <div className="text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
-                                <div className="text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
-                                <div className="text-xs">TORIL PUBLIC MARKET - MAPALENGKE</div>
+                                <div className="text-sm sm:text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
+                                <div className="text-xs sm:text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
+                                <div className="text-xs hidden sm:block">TORIL PUBLIC MARKET - MAPALENGKE</div>
                             </div>
                         </div>
                     </div>
@@ -1189,23 +1294,23 @@ export default function VendorStatus() {
             </header>
 
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-8">
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-4 sm:p-8">
                     {renderApplicationStatus()}
 
                     {/* Credential Setup Modal */}
                     {showCredentialModal && (
-                        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                            <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+                        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4">
+                            <div className="relative top-4 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
                                 <div className="mt-3">
                                     {/* Modal Header */}
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-2xl font-bold text-gray-900">Set Up Account Credentials</h3>
+                                    <div className="flex justify-between items-center mb-4 sm:mb-6">
+                                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Set Up Account Credentials</h3>
                                         <button
                                             onClick={() => setShowCredentialModal(false)}
-                                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                                            className="text-gray-400 hover:text-gray-600 transition-colors p-2"
                                         >
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         </button>
@@ -1213,7 +1318,7 @@ export default function VendorStatus() {
 
                                     {/* Success Message */}
                                     {credentialSuccess && (
-                                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
                                             <div className="flex">
                                                 <div className="flex-shrink-0">
                                                     <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -1221,14 +1326,14 @@ export default function VendorStatus() {
                                                     </svg>
                                                 </div>
                                                 <div className="ml-3">
-                                                    <p className="text-sm font-medium text-green-800">{credentialSuccess}</p>
+                                                    <p className="text-xs sm:text-sm font-medium text-green-800">{credentialSuccess}</p>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
                                     {/* Error Message */}
                                     {credentialError && (
-                                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
                                             <div className="flex">
                                                 <div className="flex-shrink-0">
                                                     <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
@@ -1236,14 +1341,14 @@ export default function VendorStatus() {
                                                     </svg>
                                                 </div>
                                                 <div className="ml-3">
-                                                    <p className="text-sm font-medium text-red-800">{credentialError}</p>
+                                                    <p className="text-xs sm:text-sm font-medium text-red-800">{credentialError}</p>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
                                     
                                     {/* Form */}
-                                    <form onSubmit={handleCredentialSetup} className="space-y-6">
+                                    <form onSubmit={handleCredentialSetup} className="space-y-4 sm:space-y-6">
                                         {/* Generated Username */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">

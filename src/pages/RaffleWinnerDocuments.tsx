@@ -128,16 +128,20 @@ export default function RaffleWinnerDocuments() {
             }
 
             // Update local state
-            setApplicationData((prev: any) => ({
-                ...prev,
+            const updatedData = {
+                ...applicationData,
                 [updateField]: previewImage.url,
                 [approvalField]: null,
                 [rejectionField]: null
-            }))
+            }
+            setApplicationData(updatedData)
 
-            // Clear preview and show success modal
+            // Clear preview
             setPreviewImage(null)
-            setShowSuccessModal(true)
+
+            // Show a simple success message for individual document upload
+            setSuccess(`${documentType === 'business_permit' ? 'Business Permit' : 'Cedula'} uploaded successfully!`)
+            setTimeout(() => setSuccess(null), 3000)
         } catch (error) {
             console.error('Error uploading file:', error)
             setError('Failed to upload document. Please try again.')
@@ -253,12 +257,8 @@ export default function RaffleWinnerDocuments() {
                 return
             }
 
-            setSuccess('Documents submitted successfully! Please wait for admin approval.')
-
-            // Redirect to status page after 3 seconds
-            setTimeout(() => {
-                navigate(`/vendor-status?app=${applicationData.application_number}`)
-            }, 3000)
+            // Show success modal
+            setShowSuccessModal(true)
 
         } catch (error) {
             console.error('Error submitting documents:', error)
@@ -337,13 +337,13 @@ export default function RaffleWinnerDocuments() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center py-4">
                         <div className="flex items-center">
-                            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
-                                <span className="text-white font-bold text-lg">M</span>
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-700 rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+                                <span className="text-white font-bold text-sm sm:text-lg">M</span>
                             </div>
                             <div>
-                                <div className="text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
-                                <div className="text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
-                                <div className="text-xs">TORIL PUBLIC MARKET - MAPALENGKE</div>
+                                <div className="text-sm sm:text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
+                                <div className="text-xs sm:text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
+                                <div className="text-xs hidden sm:block">TORIL PUBLIC MARKET - MAPALENGKE</div>
                             </div>
                         </div>
                     </div>
@@ -351,26 +351,26 @@ export default function RaffleWinnerDocuments() {
             </header>
 
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-8">
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">🏆 Raffle Winner - Additional Documents</h1>
-                        <p className="text-gray-600">Submit your Business Permit and Cedula to complete your vendor activation</p>
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-4 sm:p-8">
+                    <div className="text-center mb-6 sm:mb-8">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">🏆 Raffle Winner - Additional Documents</h1>
+                        <p className="text-sm sm:text-base text-gray-600">Submit your Business Permit and Cedula to complete your vendor activation</p>
                     </div>
 
                     {/* Application Info */}
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-8">
-                        <h2 className="text-xl font-semibold text-purple-800 mb-4">Application Information</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+                        <h2 className="text-lg sm:text-xl font-semibold text-purple-800 mb-3 sm:mb-4">Application Information</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center">
                                 <span className="font-medium text-purple-600">Application Number:</span>
-                                <span className="ml-2 text-purple-900 font-mono bg-purple-100 px-2 py-1 rounded">
+                                <span className="mt-1 sm:mt-0 sm:ml-2 text-purple-900 font-mono bg-purple-100 px-2 py-1 rounded inline-block">
                                     {applicationData?.application_number}
                                 </span>
                             </div>
-                            <div>
+                            <div className="flex flex-col sm:flex-row sm:items-center">
                                 <span className="font-medium text-purple-600">Name:</span>
-                                <span className="ml-2 text-purple-900">
+                                <span className="mt-1 sm:mt-0 sm:ml-2 text-purple-900">
                                     {applicationData?.first_name} {applicationData?.last_name}
                                 </span>
                             </div>
@@ -379,68 +379,71 @@ export default function RaffleWinnerDocuments() {
 
                     {/* Error/Success Messages */}
                     {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                            <p className="text-red-700">{error}</p>
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                            <p className="text-sm sm:text-base text-red-700">{error}</p>
                         </div>
                     )}
 
                     {success && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                            <p className="text-green-700">{success}</p>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                            <p className="text-sm sm:text-base text-green-700">{success}</p>
                         </div>
                     )}
 
-                    {/* Documents Section */}
-                    <div className="space-y-8">
+                    {/* Documents Section - Side by Side on Desktop */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         {/* Business Permit - Only show if not approved */}
                         {businessPermitStatus.status !== 'approved' && (
-                            <div className="bg-white border border-gray-200 rounded-lg p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-800">Business Permit</h3>
-                                    {getStatusBadge(businessPermitStatus.status)}
+                            <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                                <div className="flex flex-col gap-2 mb-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-base sm:text-lg font-semibold text-gray-800">Business Permit</h3>
+                                        {getStatusBadge(businessPermitStatus.status)}
+                                    </div>
                                 </div>
 
                                 {businessPermitStatus.reason && (
-                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded mb-4">
+                                    <div className="text-xs sm:text-sm text-red-600 bg-red-50 p-2 sm:p-3 rounded mb-3 sm:mb-4">
                                         <strong>Rejection Reason:</strong> {businessPermitStatus.reason}
                                     </div>
                                 )}
 
                                 {applicationData?.business_permit_document && (
-                                    <div className="mb-4">
+                                    <div className="mb-3 sm:mb-4">
                                         <img
                                             src={applicationData.business_permit_document}
                                             alt="Business Permit"
-                                            className="w-48 h-48 object-cover rounded border"
+                                            className="w-full max-w-[200px] h-auto aspect-square object-cover rounded border mx-auto"
                                         />
                                     </div>
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Upload Business Permit Photo:
+                                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Upload Business Permit:
                                     </label>
-                                    <div className="space-y-3">
+                                    <div className="space-y-2 sm:space-y-3">
                                         <input
                                             type="file"
                                             accept="image/*"
                                             onChange={(e) => handleFileUpload(e, 'business_permit')}
                                             disabled={uploading}
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            className="block w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
                                         />
                                         <div className="text-center">
-                                            <span className="text-gray-500 text-sm">or</span>
+                                            <span className="text-gray-500 text-xs sm:text-sm">or</span>
                                         </div>
                                         <button
                                             onClick={() => startCamera('business_permit')}
                                             disabled={uploading}
-                                            className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                            className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors active:scale-95"
                                         >
-                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
-                                            Take Photo with Camera
+                                            <span className="hidden sm:inline">Take Photo with Camera</span>
+                                            <span className="sm:hidden">Take Photo</span>
                                         </button>
                                     </div>
                                 </div>
@@ -449,53 +452,56 @@ export default function RaffleWinnerDocuments() {
 
                         {/* Cedula - Only show if not approved */}
                         {cedulaStatus.status !== 'approved' && (
-                            <div className="bg-white border border-gray-200 rounded-lg p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-800">Cedula (Community Tax Certificate)</h3>
-                                    {getStatusBadge(cedulaStatus.status)}
+                            <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                                <div className="flex flex-col gap-2 mb-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-base sm:text-lg font-semibold text-gray-800">Cedula (CTC)</h3>
+                                        {getStatusBadge(cedulaStatus.status)}
+                                    </div>
                                 </div>
 
                                 {cedulaStatus.reason && (
-                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded mb-4">
+                                    <div className="text-xs sm:text-sm text-red-600 bg-red-50 p-2 sm:p-3 rounded mb-3 sm:mb-4">
                                         <strong>Rejection Reason:</strong> {cedulaStatus.reason}
                                     </div>
                                 )}
 
                                 {applicationData?.cedula_document && (
-                                    <div className="mb-4">
+                                    <div className="mb-3 sm:mb-4">
                                         <img
                                             src={applicationData.cedula_document}
                                             alt="Cedula"
-                                            className="w-48 h-48 object-cover rounded border"
+                                            className="w-full max-w-[200px] h-auto aspect-square object-cover rounded border mx-auto"
                                         />
                                     </div>
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Upload Cedula Photo:
+                                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Upload Cedula:
                                     </label>
-                                    <div className="space-y-3">
+                                    <div className="space-y-2 sm:space-y-3">
                                         <input
                                             type="file"
                                             accept="image/*"
                                             onChange={(e) => handleFileUpload(e, 'cedula')}
                                             disabled={uploading}
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            className="block w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
                                         />
                                         <div className="text-center">
-                                            <span className="text-gray-500 text-sm">or</span>
+                                            <span className="text-gray-500 text-xs sm:text-sm">or</span>
                                         </div>
                                         <button
                                             onClick={() => startCamera('cedula')}
                                             disabled={uploading}
-                                            className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                            className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors active:scale-95"
                                         >
-                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
-                                            Take Photo with Camera
+                                            <span className="hidden sm:inline">Take Photo with Camera</span>
+                                            <span className="sm:hidden">Take Photo</span>
                                         </button>
                                     </div>
                                 </div>
@@ -504,12 +510,12 @@ export default function RaffleWinnerDocuments() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex justify-center gap-4 mt-8">
+                    <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-6 sm:mt-8">
                         {!allDocumentsApproved && applicationData?.status !== 'documents_submitted' && (
                             <button
                                 onClick={handleSubmitDocuments}
                                 disabled={uploading || !applicationData?.business_permit_document || !applicationData?.cedula_document}
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors active:scale-95"
                             >
                                 {uploading ? 'Processing...' : 'Submit Documents for Review'}
                             </button>
@@ -518,24 +524,24 @@ export default function RaffleWinnerDocuments() {
                         {allDocumentsApproved && (
                             <button
                                 onClick={() => navigate(`/vendor-credential-setup?app=${applicationData.application_number}`)}
-                                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors active:scale-95"
                             >
                                 Continue to Account Setup
                             </button>
                         )}
 
                         <Link
-                            to={`/vendor-status?app=${applicationData?.application_number}`}
-                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                            to={`/`}
+                            className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-center active:scale-95"
                         >
                             Back to Status
                         </Link>
                     </div>
 
                     {/* Instructions */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-8">
-                        <h3 className="font-medium text-blue-800 mb-2">Document Requirements</h3>
-                        <ul className="text-blue-700 text-sm space-y-1">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mt-6 sm:mt-8">
+                        <h3 className="font-medium text-blue-800 mb-2 text-sm sm:text-base">Document Requirements</h3>
+                        <ul className="text-blue-700 text-xs sm:text-sm space-y-1">
                             <li>• Business Permit: Clear photo of your valid business permit</li>
                             <li>• Cedula: Clear photo of your Community Tax Certificate (Cedula)</li>
                             <li>• Both documents must be readable and valid</li>
@@ -548,17 +554,17 @@ export default function RaffleWinnerDocuments() {
 
             {/* Camera Modal */}
             {showCamera && (
-                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold">
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl">
+                        <div className="flex justify-between items-center mb-3 sm:mb-4">
+                            <h3 className="text-base sm:text-lg font-semibold">
                                 Take Photo - {showCamera === 'business_permit' ? 'Business Permit' : 'Cedula'}
                             </h3>
                             <button
                                 onClick={stopCamera}
-                                className="text-gray-400 hover:text-gray-600"
+                                className="text-gray-400 hover:text-gray-600 p-1"
                             >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
@@ -569,7 +575,7 @@ export default function RaffleWinnerDocuments() {
                                 ref={videoRef}
                                 autoPlay
                                 playsInline
-                                className="w-full h-80 bg-black rounded-lg object-cover"
+                                className="w-full h-64 sm:h-80 bg-black rounded-lg object-cover"
                             />
                             <canvas
                                 ref={canvasRef}
@@ -577,11 +583,11 @@ export default function RaffleWinnerDocuments() {
                             />
                         </div>
 
-                        <div className="flex justify-center gap-4 mt-4">
+                        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-3 sm:mt-4">
                             <button
                                 onClick={capturePhoto}
                                 disabled={uploading}
-                                className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                className="flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors active:scale-95"
                             >
                                 {uploading ? (
                                     <>
@@ -590,7 +596,7 @@ export default function RaffleWinnerDocuments() {
                                     </>
                                 ) : (
                                     <>
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
@@ -600,13 +606,13 @@ export default function RaffleWinnerDocuments() {
                             </button>
                             <button
                                 onClick={stopCamera}
-                                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors active:scale-95"
                             >
                                 Cancel
                             </button>
                         </div>
 
-                        <div className="mt-4 text-sm text-gray-600 text-center">
+                        <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 text-center">
                             <p>Position the document clearly in the camera view and click "Capture Photo"</p>
                         </div>
                     </div>
@@ -617,21 +623,21 @@ export default function RaffleWinnerDocuments() {
             {previewImage && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                        <div className="p-4 sm:p-6">
+                            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
                                 Preview {previewImage.type === 'business_permit' ? 'Business Permit' : 'Cedula'}
                             </h2>
-                            <div className="mb-6">
+                            <div className="mb-4 sm:mb-6">
                                 <img
                                     src={previewImage.url}
                                     alt="Preview"
                                     className="w-full rounded-lg border border-gray-300"
                                 />
                             </div>
-                            <div className="flex justify-end gap-3">
+                            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                                 <button
                                     onClick={() => setPreviewImage(null)}
-                                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                    className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors active:scale-95"
                                     disabled={uploading}
                                 >
                                     Cancel
@@ -639,10 +645,10 @@ export default function RaffleWinnerDocuments() {
                                 <button
                                     onClick={handleSubmitDocument}
                                     disabled={uploading}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                    className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors active:scale-95"
                                 >
                                     {uploading ? (
-                                        <span className="flex items-center">
+                                        <span className="flex items-center justify-center">
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                             Submitting...
                                         </span>
@@ -660,22 +666,22 @@ export default function RaffleWinnerDocuments() {
             {showSuccessModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-md w-full">
-                        <div className="p-6 text-center">
-                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="p-4 sm:p-6 text-center">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Document Submitted!</h2>
-                            <p className="text-gray-600 mb-6">
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Document Submitted!</h2>
+                            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                                 Your document has been successfully submitted and is now waiting for admin review.
                             </p>
-                            <Link
-                                to="/"
-                                className="inline-block w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
+                            <button
+                                onClick={() => navigate(`/`)}
+                                className="inline-block w-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center font-medium active:scale-95"
                             >
                                 Go to Home
-                            </Link>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -29,32 +29,32 @@ const PreparationModal: React.FC<PreparationModalProps> = ({ isOpen, onClose, on
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Vendor Application Requirements</h2>
+                <div className="p-4 sm:p-6">
+                    <div className="flex justify-between items-center mb-4 sm:mb-6">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Vendor Application Requirements</h2>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 text-2xl"
+                            className="text-gray-400 hover:text-gray-600 text-2xl min-w-[44px] min-h-[44px] flex items-center justify-center"
                         >
                             ×
                         </button>
                     </div>
 
-                    <div className="mb-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Please prepare the following documents:</h3>
-                        <ul className="space-y-3">
+                    <div className="mb-4 sm:mb-6">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Please prepare the following documents:</h3>
+                        <ul className="space-y-2 sm:space-y-3">
                             {requirements.map((requirement, index) => (
                                 <li key={index} className="flex items-start">
                                     <span className="flex-shrink-0 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600 mr-3 mt-0.5">
                                         {index + 1}
                                     </span>
-                                    <span className="text-gray-700">{requirement}</span>
+                                    <span className="text-sm sm:text-base text-gray-700">{requirement}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
                         <div className="flex">
                             <div className="flex-shrink-0">
                                 <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -63,7 +63,7 @@ const PreparationModal: React.FC<PreparationModalProps> = ({ isOpen, onClose, on
                             </div>
                             <div className="ml-3">
                                 <h3 className="text-sm font-medium text-yellow-800">Important Notes:</h3>
-                                <div className="mt-2 text-sm text-yellow-700">
+                                <div className="mt-2 text-xs sm:text-sm text-yellow-700">
                                     <ul className="list-disc list-inside space-y-1">
                                         <li>All documents must be original and valid</li>
                                         <li>Photos will be taken during the application process</li>
@@ -75,16 +75,16 @@ const PreparationModal: React.FC<PreparationModalProps> = ({ isOpen, onClose, on
                         </div>
                     </div>
 
-                    <div className="flex justify-end space-x-3">
+                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                            className="w-full sm:w-auto px-4 py-3 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 active:scale-95 transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={onProceed}
-                            className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                            className="w-full sm:w-auto px-6 py-3 sm:py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 active:scale-95 transition-all"
                         >
                             I Have All Requirements - Proceed
                         </button>
@@ -199,15 +199,15 @@ export default function VendorApplication() {
             {/* Header */}
             <header className="bg-gray-800 text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center py-4">
+                    <div className="flex items-center py-3 sm:py-4">
                         <div className="flex items-center">
-                            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
-                                <span className="text-white font-bold text-lg">M</span>
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-700 rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                                <span className="text-white font-bold text-base sm:text-lg">M</span>
                             </div>
                             <div>
-                                <div className="text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
-                                <div className="text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
-                                <div className="text-xs">TORIL PUBLIC MARKET - MAPALENGKE</div>
+                                <div className="text-sm sm:text-lg font-bold">REPUBLIC OF THE PHILIPPINES</div>
+                                <div className="text-xs sm:text-sm font-semibold">DEPARTMENT OF TRADE AND INDUSTRY</div>
+                                <div className="text-xs hidden sm:block">TORIL PUBLIC MARKET - MAPALENGKE</div>
                             </div>
                         </div>
                     </div>
@@ -217,8 +217,8 @@ export default function VendorApplication() {
             {/* Secondary Header */}
             <div className="bg-gray-700 text-white py-2">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-xl font-semibold">Vendor Application Form</h1>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                        <h1 className="text-lg sm:text-xl font-semibold">Vendor Application Form</h1>
                         <Link
                             to="/"
                             className="text-sm text-gray-300 hover:text-white transition-colors"
@@ -230,91 +230,91 @@ export default function VendorApplication() {
             </div>
 
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
                 {loading ? (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-8">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-6 sm:p-8">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
                             <p className="text-gray-600">Loading stall information...</p>
                         </div>
                     </div>
                 ) : error ? (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-8">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-6 sm:p-8">
                         <div className="text-center">
-                            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Error</h2>
-                            <p className="text-gray-600 mb-6">{error}</p>
+                            <div className="text-red-500 text-5xl sm:text-6xl mb-4">⚠️</div>
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Error</h2>
+                            <p className="text-sm sm:text-base text-gray-600 mb-6">{error}</p>
                             <Link
                                 to="/"
-                                className="bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+                                className="inline-block bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 active:scale-95 transition-all"
                             >
                                 ← Back to Home
                             </Link>
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-8">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-4 sm:p-8">
                         <div className="text-center">
-                            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
 
-                            <h2 className="text-3xl font-bold text-gray-900 mb-4">Vendor Application</h2>
-                            <p className="text-lg text-gray-600 mb-8">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Vendor Application</h2>
+                            <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 px-2">
                                 You are applying for a specific stall at Toril Public Market.
                                 Please ensure you have all required documents ready before proceeding.
                             </p>
 
                             {/* Selected Stall Information */}
                             {stall && section && (
-                                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6 mb-8">
-                                    <h3 className="text-xl font-bold text-green-900 mb-4">Selected Stall Information</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                                        <div className="bg-white rounded-lg p-4 border border-green-200">
-                                            <div className="text-sm text-green-600 font-semibold mb-1">STALL NUMBER</div>
-                                            <div className="text-2xl font-bold text-green-800">{stall.stall_number}</div>
+                                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+                                    <h3 className="text-lg sm:text-xl font-bold text-green-900 mb-3 sm:mb-4">Selected Stall Information</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-left">
+                                        <div className="bg-white rounded-lg p-3 sm:p-4 border border-green-200">
+                                            <div className="text-xs sm:text-sm text-green-600 font-semibold mb-1">STALL NUMBER</div>
+                                            <div className="text-xl sm:text-2xl font-bold text-green-800">{stall.stall_number}</div>
                                         </div>
-                                        <div className="bg-white rounded-lg p-4 border border-green-200">
-                                            <div className="text-sm text-green-600 font-semibold mb-1">MARKET SECTION</div>
-                                            <div className="text-lg font-bold text-green-800">{section.name}</div>
-                                            <div className="text-sm text-green-600">{section.description}</div>
+                                        <div className="bg-white rounded-lg p-3 sm:p-4 border border-green-200">
+                                            <div className="text-xs sm:text-sm text-green-600 font-semibold mb-1">MARKET SECTION</div>
+                                            <div className="text-base sm:text-lg font-bold text-green-800">{section.name}</div>
+                                            <div className="text-xs sm:text-sm text-green-600">{section.description}</div>
                                         </div>
                                     </div>
-                                    <div className="mt-4 text-center">
-                                        <p className="text-green-700 font-medium">
+                                    <div className="mt-3 sm:mt-4 text-center">
+                                        <p className="text-sm sm:text-base text-green-700 font-medium">
                                             ✅ This stall is available for application
                                         </p>
                                     </div>
                                 </div>
                             )}
 
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Application Process Overview</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Application Process Overview</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left">
                                     <div className="flex items-center">
                                         <span className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600 mr-3">1</span>
-                                        <span className="text-gray-700">Personal Information</span>
+                                        <span className="text-sm sm:text-base text-gray-700">Personal Information</span>
                                     </div>
                                     <div className="flex items-center">
                                         <span className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600 mr-3">2</span>
-                                        <span className="text-gray-700">Photo Documentation</span>
+                                        <span className="text-sm sm:text-base text-gray-700">Photo Documentation</span>
                                     </div>
                                     <div className="flex items-center">
                                         <span className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600 mr-3">3</span>
-                                        <span className="text-gray-700">Document Verification</span>
+                                        <span className="text-sm sm:text-base text-gray-700">Document Verification</span>
                                     </div>
                                     <div className="flex items-center">
                                         <span className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600 mr-3">4</span>
-                                        <span className="text-gray-700">Payment & Completion</span>
+                                        <span className="text-sm sm:text-base text-gray-700">Payment & Completion</span>
                                     </div>
                                 </div>
                             </div>
 
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+                                className="w-full sm:w-auto bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-700 active:scale-95 transition-all"
                             >
                                 Start Application Process
                             </button>

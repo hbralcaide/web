@@ -144,9 +144,9 @@ const Signup = () => {
 
   if (isVerifying) {
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-100 flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-center text-2xl sm:text-3xl font-extrabold text-gray-900">
             Verifying invitation...
           </h2>
         </div>
@@ -155,40 +155,40 @@ const Signup = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-pink-100 via-white to-red-100">
-      <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl flex overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-pink-100 via-white to-red-100 px-4 py-8 sm:px-6 sm:py-12">
+      <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden">
         {/* Left Panel: Signup Form */}
-        <div className="w-2/3 p-6 flex flex-col justify-center bg-white bg-opacity-90 transition-all duration-300 ease-in-out">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-4 text-center tracking-tight">Sign Up</h2>
-          <form className="space-y-4 animate-fade-in" onSubmit={handleSubmit}>
+        <div className="w-full md:w-2/3 p-4 sm:p-6 flex flex-col justify-center bg-white bg-opacity-90 transition-all duration-300 ease-in-out">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3 sm:mb-4 text-center tracking-tight">Sign Up</h2>
+          <form className="space-y-3 sm:space-y-4 animate-fade-in" onSubmit={handleSubmit}>
             {/* First Name */}
             <div>
-              <label htmlFor="firstName" className="block text-base font-semibold text-gray-700 mb-2">First Name</label>
+              <label htmlFor="firstName" className="block text-sm sm:text-base font-semibold text-gray-700 mb-1 sm:mb-2">First Name</label>
               <input
                 type="text"
                 id="firstName"
                 required
-                className="block w-full rounded-lg border border-gray-300 shadow-sm px-4 py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
+                className="block w-full rounded-lg border border-gray-300 shadow-sm px-3 sm:px-4 py-2.5 sm:py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
                 value={formData.firstName}
                 onChange={e => setFormData(prev => ({...prev, firstName: e.target.value}))}
               />
             </div>
             {/* Last Name */}
             <div>
-              <label htmlFor="lastName" className="block text-base font-semibold text-gray-700 mb-2">Last Name</label>
+              <label htmlFor="lastName" className="block text-sm sm:text-base font-semibold text-gray-700 mb-1 sm:mb-2">Last Name</label>
               <input
                 type="text"
                 id="lastName"
                 required
-                className="block w-full rounded-lg border border-gray-300 shadow-sm px-4 py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
+                className="block w-full rounded-lg border border-gray-300 shadow-sm px-3 sm:px-4 py-2.5 sm:py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
                 value={formData.lastName}
                 onChange={e => setFormData(prev => ({...prev, lastName: e.target.value}))}
               />
             </div>
             {/* Username Preview */}
             <div>
-              <label htmlFor="username" className="block text-base font-semibold text-gray-700 mb-2">Username (auto-generated)</label>
-              <div className="block w-full p-2 rounded-lg border border-gray-300 bg-gray-50 text-base">
+              <label htmlFor="username" className="block text-sm sm:text-base font-semibold text-gray-700 mb-1 sm:mb-2">Username (auto-generated)</label>
+              <div className="block w-full p-2 sm:p-2 rounded-lg border border-gray-300 bg-gray-50 text-sm sm:text-base">
                 <span className="text-gray-900 font-semibold">
                   {formData.firstName && formData.lastName ? `${formData.firstName.charAt(0).toLowerCase()}${formData.lastName.toLowerCase()}` : 'Please enter your name'}
                 </span>
@@ -196,9 +196,9 @@ const Signup = () => {
             </div>
             {/* Phone Number */}
             <div>
-              <label htmlFor="phoneNumber" className="block text-base font-semibold text-gray-700 mb-2">Phone Number</label>
+              <label htmlFor="phoneNumber" className="block text-sm sm:text-base font-semibold text-gray-700 mb-1 sm:mb-2">Phone Number</label>
               <div className="flex items-center mt-1">
-                <span className="inline-block px-3 py-2 bg-gray-100 border border-gray-300 rounded-l-lg text-gray-700 font-semibold text-base">+63</span>
+                <span className="inline-block px-2 sm:px-3 py-2.5 sm:py-2 bg-gray-100 border border-gray-300 rounded-l-lg text-gray-700 font-semibold text-sm sm:text-base">+63</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -215,7 +215,7 @@ const Signup = () => {
                     }
                     setFormData(prev => ({ ...prev, phoneNumber: formatted }));
                   }}
-                  className="block w-full rounded-r-lg border border-gray-300 shadow-sm px-4 py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 text-gray-900 font-semibold transition-all duration-200"
+                  className="block w-full rounded-r-lg border border-gray-300 shadow-sm px-3 sm:px-4 py-2.5 sm:py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 text-gray-900 font-semibold transition-all duration-200"
                   placeholder="xxx xxx xxxx"
                   required
                 />
@@ -223,33 +223,33 @@ const Signup = () => {
             </div>
             {/* Email (readonly) */}
             <div>
-              <label htmlFor="email" className="block text-base font-semibold text-gray-700 mb-2">Email</label>
-              <div className="block w-full p-2 rounded-lg border border-gray-300 bg-gray-50 text-base">
-                <span className="text-gray-900 font-semibold">
+              <label htmlFor="email" className="block text-sm sm:text-base font-semibold text-gray-700 mb-1 sm:mb-2">Email</label>
+              <div className="block w-full p-2 sm:p-2 rounded-lg border border-gray-300 bg-gray-50 text-sm sm:text-base">
+                <span className="text-gray-900 font-semibold break-all">
                   {emailValue || 'No email found. Please use the invitation link from your email.'}
                 </span>
               </div>
             </div>
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-base font-semibold text-gray-700 mb-2">Password</label>
+              <label htmlFor="password" className="block text-sm sm:text-base font-semibold text-gray-700 mb-1 sm:mb-2">Password</label>
               <input
                 type="password"
                 id="password"
                 required
-                className="block w-full rounded-lg border border-gray-300 shadow-sm px-4 py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
+                className="block w-full rounded-lg border border-gray-300 shadow-sm px-3 sm:px-4 py-2.5 sm:py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
                 value={formData.password}
                 onChange={e => setFormData(prev => ({...prev, password: e.target.value}))}
               />
             </div>
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-base font-semibold text-gray-700 mb-2">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="block text-sm sm:text-base font-semibold text-gray-700 mb-1 sm:mb-2">Confirm Password</label>
               <input
                 type="password"
                 id="confirmPassword"
                 required
-                className="block w-full rounded-lg border border-gray-300 shadow-sm px-4 py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
+                className="block w-full rounded-lg border border-gray-300 shadow-sm px-3 sm:px-4 py-2.5 sm:py-2 text-base focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
                 value={formData.confirmPassword}
                 onChange={e => setFormData(prev => ({...prev, confirmPassword: e.target.value}))}
               />
@@ -262,14 +262,14 @@ const Signup = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-3 rounded-lg shadow-lg text-base font-bold text-white bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400 mt-4 transition-all duration-200"
+              className="w-full py-3 px-3 rounded-lg shadow-lg text-base font-bold text-white bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400 mt-3 sm:mt-4"
             >
               {loading ? 'Creating account...' : 'Complete Setup'}
             </button>
           </form>
         </div>
         {/* Right Panel: Welcome Message */}
-        <div className="w-1/3 flex flex-col items-center justify-center bg-gradient-to-tr from-pink-500 to-red-500 text-white p-6 animate-slide-in-right">
+        <div className="hidden md:flex md:w-1/3 flex-col items-center justify-center bg-gradient-to-tr from-pink-500 to-red-500 text-white p-6 animate-slide-in-right">
           <h2 className="text-3xl font-extrabold mb-4 tracking-tight">Hello, Friend!</h2>
           <p className="mb-6 text-base text-center">Enter your personal details and start your journey with us.</p>
         </div>

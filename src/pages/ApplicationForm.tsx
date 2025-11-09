@@ -1,3 +1,10 @@
+// @ts-nocheck
+import { useState, useEffect, useRef } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { uploadPhoto } from '../utils/photoUpload'
+import { supabase } from '../lib/supabase'
+import jsPDF from 'jspdf'
+
 interface VendorApplication {
     id: string;
     application_number: string;
@@ -24,10 +31,6 @@ interface VendorApplication {
     stall_assigned_at?: string;
     [key: string]: any;
 }
-import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { uploadPhoto } from '../utils/photoUpload'
-import { supabase } from '../lib/supabase'
 
 interface VerificationModalProps {
     isOpen: boolean
@@ -514,84 +517,136 @@ export default function ApplicationForm() {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
         
         if (isMobile) {
-            // For mobile: Create a blob and download as HTML
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Application Form - ${applicationData?.first_name || 'Applicant'} ${applicationData?.last_name || ''}</title>
-                    <style>
-                        @page {
-                            size: legal;
-                            margin: 0.75in 1in;
-                        }
-                        body { 
-                            font-family: 'Times New Roman', Times, serif; 
-                            margin: 0;
-                            padding: 0;
-                            line-height: 1.4;
-                            font-size: 11pt;
-                        }
-                        p {
-                            margin: 8px 0;
-                        }
-                        .conditions {
-                            margin-left: 20px;
-                        }
-                        .condition {
-                            margin-bottom: 6px;
-                        }
-                        .signature-line {
-                            border-bottom: 1px solid black;
-                            display: inline-block;
-                            min-width: 200px;
-                            text-align: center;
-                        }
-                        .date-right {
-                            text-align: right;
-                            margin-bottom: 15px;
-                        }
-                        .header-left {
-                            margin-bottom: 15px;
-                        }
-                        .signature-section {
-                            margin-top: 20px;
-                            text-align: right;
-                        }
-                        @media print {
-                            body {
-                                margin: 0;
-                                padding: 0;
-                            }
-                            @page {
-                                size: legal;
-                                margin: 0.75in 1in;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${generateApplicationFormHTML()}
-                </body>
-                </html>
-            `
-            
-            // Create a blob from the HTML content
-            const blob = new Blob([htmlContent], { type: 'text/html' })
-            const url = URL.createObjectURL(blob)
-            
-            // Create a temporary link and trigger download
-            const link = document.createElement('a')
-            link.href = url
-            link.download = `Application_Form_${applicationData?.first_name || 'Applicant'}_${applicationData?.last_name || ''}_${new Date().getTime()}.html`
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-            
-            // Clean up the URL object
-            setTimeout(() => URL.revokeObjectURL(url), 100)
+            // For mobile: Generate PDF using jsPDF
+            try {
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'in',
+                    format: 'legal' // 8.5 x 14 inches
+                })
+
+                const pageWidth = pdf.internal.pageSize.getWidth()
+                const pageHeight = pdf.internal.pageSize.getHeight()
+                const margin = 1
+                const contentWidth = pageWidth - (margin * 2)
+                let yPos = 0.75
+
+                // Set font
+                pdf.setFont('times', 'normal')
+                pdf.setFontSize(11)
+
+                // Date (right aligned)
+                const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: '2-digit' }).toUpperCase()
+                pdf.setFontSize(11)
+                pdf.text(currentDate, pageWidth - margin, yPos, { align: 'right' })
+                yPos += 0.3
+                pdf.line(pageWidth - margin - 1.5, yPos, pageWidth - margin, yPos)
+                pdf.setFontSize(9)
+                pdf.text('Date', pageWidth - margin - 0.75, yPos + 0.15, { align: 'center' })
+                yPos += 0.4
+
+                // Header
+                pdf.setFontSize(11)
+                pdf.setFont('times', 'bold')
+                pdf.text('THE CITY ADMINISTRATOR', margin, yPos)
+                yPos += 0.2
+                pdf.setFont('times', 'normal')
+                pdf.text('Davao City', margin, yPos)
+                yPos += 0.3
+
+                pdf.text('Sir/Madam:', margin, yPos)
+                yPos += 0.3
+
+                // First paragraph
+                const fullName = `${applicationData?.first_name || '______'} ${applicationData?.middle_name || ''} ${applicationData?.last_name || '______'}`
+                const maritalText = applicationData?.marital_status === 'Married' && applicationData?.spouse_name 
+                    ? `married to ${applicationData.spouse_name}` 
+                    : (applicationData?.marital_status?.toLowerCase() || 'single')
+                
+                const para1 = `     I, ${fullName}, ${applicationData?.age || '______'} years old, Filipino Citizen, ${maritalText} and residing at ${applicationData?.complete_address || '______'}, hereby apply for the lease of market stall/booth No. ${selectedStall?.stall_number || '______'}, MB 2, ${selectedStall?.section_name || '______'} Section of Toril Public Market.`
+                
+                const para1Lines = pdf.splitTextToSize(para1, contentWidth)
+                pdf.text(para1Lines, margin, yPos)
+                yPos += para1Lines.length * 0.17
+
+                // Second paragraph
+                const para2 = '     Should the above-mentioned stall/booth be leased to me in accordance with the market rules and regulations, I promise to hold the same under the following conditions:'
+                const para2Lines = pdf.splitTextToSize(para2, contentWidth)
+                pdf.text(para2Lines, margin, yPos)
+                yPos += para2Lines.length * 0.17 + 0.1
+
+                // Conditions
+                const conditions = [
+                    'That, while I am occupying or leasing this stall/booth, I shall at all times have my picture and that of my helper (or those of my helpers) conveniently framed and hung-up conspicuously in this stall;',
+                    'That I shall keep the stall/booth at all times in good sanitary conditions and comply strictly with all sanitary and market rules and regulations now existing or which may hereafter be promulgated;',
+                    'I shall pay the corresponding rents for the stall/booth or fees for the stall/booth, including business permit or license and taxes in the manner prescribed by existing ordinances;',
+                    'The business to be conducted in the stall/booth shall belong exclusively to me;',
+                    'In case I engaged helpers, I shall nevertheless personally conduct my business and be present at the stall/booth. I shall promptly notify the market authorities of my absence giving my reason or reasons thereof;',
+                    'I shall not lease/occupy more than one (1) stall/booth in a particular market;',
+                    'I shall not sell or transfer my privilege to the stall/booth or permit another person to conduct business therein without the approval from the Market Committee;',
+                    'Any violation on my part or on the part of my helpers of the foregoing conditions shall be sufficient cause for market authorities to cancel the Contract of Lease;'
+                ]
+
+                conditions.forEach((condition, index) => {
+                    const condText = `${index + 1}. ${condition}`
+                    const condLines = pdf.splitTextToSize(condText, contentWidth - 0.3)
+                    pdf.text(condLines, margin + 0.3, yPos)
+                    yPos += condLines.length * 0.17 + 0.05
+                })
+
+                // Signature - Applicant
+                yPos += 0.1
+                pdf.text('Very truly yours,', pageWidth - margin - 2, yPos, { align: 'right' })
+                yPos += 0.3
+                pdf.line(pageWidth - margin - 2.5, yPos, pageWidth - margin, yPos)
+                pdf.text(fullName, pageWidth - margin - 1.25, yPos - 0.05, { align: 'center' })
+                pdf.setFontSize(9)
+                pdf.text('Applicant', pageWidth - margin - 1.25, yPos + 0.15, { align: 'center' })
+                pdf.setFontSize(11)
+                yPos += 0.4
+
+                // Affiant paragraph
+                const para3 = `     I, ${fullName}, do hereby state that I am the person who signed the foregoing statement/application; that I have read the same and that the contents thereof are true to the best of my knowledge.`
+                const para3Lines = pdf.splitTextToSize(para3, contentWidth)
+                pdf.text(para3Lines, margin, yPos)
+                yPos += para3Lines.length * 0.17 + 0.2
+
+                // Signature - Affiant
+                pdf.line(pageWidth - margin - 2.5, yPos, pageWidth - margin, yPos)
+                pdf.text(fullName, pageWidth - margin - 1.25, yPos - 0.05, { align: 'center' })
+                pdf.setFontSize(9)
+                pdf.text('Affiant', pageWidth - margin - 1.25, yPos + 0.15, { align: 'center' })
+                pdf.setFontSize(11)
+                yPos += 0.4
+
+                // Notarization
+                const para4 = 'SUBSCRIBED AND SWORN TO before me in the City of Davao, Philippines, this ___ day of __________, 20___, affiant exhibited to me his/her Community Tax Certificate No. ______ issued at __________ on __________, 20___.'
+                const para4Lines = pdf.splitTextToSize(para4, contentWidth)
+                pdf.text(para4Lines, margin, yPos)
+                yPos += para4Lines.length * 0.17 + 0.2
+
+                // Signature - Notary
+                pdf.line(pageWidth - margin - 2.5, yPos, pageWidth - margin, yPos)
+                pdf.setFontSize(9)
+                pdf.text('Notary Public', pageWidth - margin - 1.25, yPos + 0.15, { align: 'center' })
+                pdf.setFontSize(9)
+                yPos += 0.4
+
+                // Document details
+                pdf.text('Doc. No. _____', margin, yPos)
+                yPos += 0.15
+                pdf.text('Page No. _____', margin, yPos)
+                yPos += 0.15
+                pdf.text('Book No. _____', margin, yPos)
+                yPos += 0.15
+                pdf.text('Series of 20___', margin, yPos)
+
+                // Save PDF
+                pdf.save(`Application_Form_${applicationData?.first_name || 'Applicant'}_${applicationData?.last_name || ''}.pdf`)
+            } catch (error) {
+                console.error('Error generating PDF:', error)
+                alert('Failed to generate PDF. Please try again.')
+            }
         } else {
             // Desktop: Use the original window.open() method
             const printWindow = window.open('', '_blank')

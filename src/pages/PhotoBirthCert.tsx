@@ -356,11 +356,11 @@ export default function PhotoBirthCert() {
             {/* Secondary Header */}
             <div className="bg-gray-700 text-white py-2">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-xl font-semibold">Step 5: Birth Certificate</h1>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <h1 className="text-lg sm:text-xl font-semibold">Step 5: Birth Certificate</h1>
                         <Link
                             to="/vendor-application/photo-id"
-                            className="text-sm text-gray-300 hover:text-white transition-colors"
+                            className="text-xs sm:text-sm text-gray-300 hover:text-white transition-colors"
                         >
                             ← Back to Government ID
                         </Link>
@@ -368,8 +368,8 @@ export default function PhotoBirthCert() {
                 </div>
             </div>
 
-            {/* Progress Bar */}
-            <div className="bg-white border-b border-gray-200">
+            {/* Progress Bar - Desktop */}
+            <div className="hidden md:block bg-white border-b border-gray-200">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -423,20 +423,38 @@ export default function PhotoBirthCert() {
                 </div>
             </div>
 
+            {/* Progress Bar - Mobile */}
+            <div className="md:hidden bg-white border-b border-gray-200">
+                <div className="max-w-4xl mx-auto px-4 py-3">
+                    <div className="text-center mb-2">
+                        <span className="text-sm font-medium text-gray-800">Step 5 of {maritalStatus === 'Single' ? '6' : '7'}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                            className="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                            style={{ width: maritalStatus === 'Single' ? '83.33%' : '71.43%' }}
+                        ></div>
+                    </div>
+                    <div className="text-center mt-2">
+                        <span className="text-xs text-gray-600">Birth Certificate</span>
+                    </div>
+                </div>
+            </div>
+
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-8">
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Birth Certificate Photo</h2>
-                        <p className="text-gray-600">Please take a clear photo of your PSA-certified Birth Certificate.</p>
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-4 sm:p-8">
+                    <div className="mb-6 sm:mb-8">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Birth Certificate Photo</h2>
+                        <p className="text-sm sm:text-base text-gray-600">Please take a clear photo of your PSA-certified Birth Certificate.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8">
                         {/* Instructions - Left Side */}
                         <div className="lg:col-span-2">
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 sticky top-4">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Document Requirements:</h3>
-                                <ul className="space-y-2 text-gray-700">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6 lg:sticky lg:top-4">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Document Requirements:</h3>
+                                <ul className="space-y-2 text-sm sm:text-base text-gray-700">
                                     <li className="flex items-start">
                                         <span className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center text-xs font-semibold text-gray-600 mr-3 mt-0.5">1</span>
                                         <span>PSA-certified Birth Certificate only</span>
@@ -458,10 +476,10 @@ export default function PhotoBirthCert() {
                         </div>
 
                         {/* Photo Upload Area - Right Side */}
-                        <div className="lg:col-span-3 space-y-6">
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <div className="lg:col-span-3 space-y-4 sm:space-y-6">
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8 text-center">
                                 {preview ? (
-                                    <div className="space-y-4">
+                                    <div className="space-y-3 sm:space-y-4">
                                         <div className="mx-auto max-w-md">
                                             <img
                                                 src={preview}
@@ -469,32 +487,32 @@ export default function PhotoBirthCert() {
                                                 className="w-full h-auto rounded-lg shadow-sm"
                                             />
                                         </div>
-                                        <div className="flex justify-center space-x-4">
+                                        <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
                                             <button
                                                 onClick={handleRetake}
-                                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                                                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors active:scale-95"
                                             >
                                                 Retake Photo
                                             </button>
                                             <button
                                                 onClick={handleNext}
-                                                className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                                className="w-full sm:w-auto px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors active:scale-95"
                                             >
                                                 Use This Photo
                                             </button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
-                                        <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto">
-                                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="space-y-3 sm:space-y-4">
+                                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto">
+                                            <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-medium text-gray-900 mb-2">Take or Upload Photo</h3>
-                                            <p className="text-gray-600 mb-4">Take a clear photo of your Birth Certificate or upload an existing photo</p>
-                                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Take or Upload Photo</h3>
+                                            <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">Take a clear photo of your Birth Certificate or upload an existing photo</p>
+                                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -506,9 +524,9 @@ export default function PhotoBirthCert() {
                                                 <button
                                                     type="button"
                                                     onClick={handleTakePhoto}
-                                                    className="inline-flex items-center px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
+                                                    className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm sm:text-base bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer active:scale-95"
                                                 >
-                                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                                     </svg>
@@ -524,9 +542,9 @@ export default function PhotoBirthCert() {
                                                 />
                                                 <label
                                                     htmlFor="photo-upload"
-                                                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                                                    className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer active:scale-95"
                                                 >
-                                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                     </svg>
                                                     Upload Photo
@@ -538,25 +556,25 @@ export default function PhotoBirthCert() {
                             </div>
 
                             {error && (
-                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                    <p className="text-red-600">{error}</p>
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+                                    <p className="text-sm sm:text-base text-red-600">{error}</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
                     {/* Navigation */}
-                    <div className="flex justify-between pt-6">
+                    <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6">
                         <button
                             onClick={handlePrevious}
-                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                            className="w-full sm:w-auto px-4 sm:px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors active:scale-95"
                         >
                             ← Previous
                         </button>
                         <button
                             onClick={handleNext}
                             disabled={!photo || uploading}
-                            className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed active:scale-95"
                         >
                             {uploading ? (
                                 <>

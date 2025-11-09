@@ -142,16 +142,6 @@ export default function PublicHome() {
                                 <div className="text-xs hidden sm:block">Toril Pob., Toril, Davao City, 8000 Philippines</div>
                             </div>
                         </div>
-
-                        {/* Admin Login Button */}
-                        <div className="w-full sm:w-auto">
-                            <Link
-                                to="/login"
-                                className="block text-center bg-white text-gray-800 px-4 sm:px-6 py-2 rounded font-semibold hover:bg-gray-100 transition-colors w-full sm:w-auto"
-                            >
-                                Admin Login
-                            </Link>
-                        </div>
                     </div>
                 </div>
             </header>
@@ -399,6 +389,15 @@ export default function PublicHome() {
                                     <p className="text-xs text-gray-500 mt-2 bg-yellow-900 bg-opacity-30 py-2 px-4 rounded inline-block">
                                         ⚠️ This is an academic thesis project and NOT an official government website.
                                     </p>
+                                    {/* Subtle Admin Login Link */}
+                                    <div className="mt-4">
+                                        <Link 
+                                            to="/login" 
+                                            className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                                        >
+                                            Admin
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>

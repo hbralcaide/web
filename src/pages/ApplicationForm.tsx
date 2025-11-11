@@ -112,6 +112,7 @@ export default function ApplicationForm() {
     const [applicationId, setApplicationId] = useState<string>('')
     const [uploading, setUploading] = useState(false)
     const [showVerificationModal, setShowVerificationModal] = useState(false)
+    const [isReupload, setIsReupload] = useState(false)
 
     // Generate simple, short application ID
     const generateApplicationId = () => {
@@ -121,6 +122,12 @@ export default function ApplicationForm() {
     }
 
     useEffect(() => {
+        // Check if this is a reupload scenario
+        const reuploadDocumentType = localStorage.getItem('reuploadDocumentType')
+        if (reuploadDocumentType === 'notarized_document') {
+            setIsReupload(true)
+        }
+        
         // Load application data from database instead of localStorage
         const loadApplicationData = async () => {
             try {
@@ -209,9 +216,21 @@ export default function ApplicationForm() {
             }
 
             const vendorApplicationId = applicationData.id
+            
+            // Prepare update data
+            const updateData: any = { notarized_document: photoUrl }
+            
+            // If this is a reupload, reset approval status
+            if (isReupload) {
+                updateData.notarized_document_approved = null
+                updateData.notarized_document_rejection_reason = null
+                // Note: notarized_document_reuploaded column needs to be added to database
+                // Run the migration in supabase/migrations/20251112_add_notarized_document_reupload_column.sql
+            }
+            
             const { error } = await supabase
                 .from('vendor_applications')
-                .update({ notarized_document: photoUrl })
+                .update(updateData)
                 .eq('id', vendorApplicationId)
 
             if (error) throw error
@@ -467,6 +486,23 @@ export default function ApplicationForm() {
             const vendorApplicationId = applicationData.id
             console.log('Using vendor application ID from database:', vendorApplicationId)
 
+            // If this is a reupload, just navigate back to status page
+            if (isReupload) {
+                // Clear the reupload flag
+                localStorage.removeItem('reuploadDocumentType')
+                localStorage.removeItem('vendorApplicationId')
+                
+                // Navigate back to status check page
+                const applicationNumber = applicationData.application_number
+                if (applicationNumber) {
+                    navigate(`/vendor-status?app=${applicationNumber}`)
+                } else {
+                    navigate('/vendor-status')
+                }
+                return
+            }
+
+            // Original flow for new applications
             // Update application status to pending_approval
             const { error: updateError } = await supabase
                 .from('vendor_applications')
@@ -932,6 +968,25 @@ export default function ApplicationForm() {
 
             {/* Main Content Preview page*/}
             <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                {/* Reupload Notice */}
+                {isReupload && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-start">
+                            <div className="flex-shrink-0">
+                                <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <div className="ml-3 flex-1">
+                                <h3 className="text-sm font-medium text-blue-800">Re-uploading Notarized Document</h3>
+                                <p className="mt-1 text-sm text-blue-700">
+                                    Your document was rejected. Please upload a new notarized document. After uploading, click "Done - Return to Status" to go back to your status page.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
                 <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-4 sm:p-8">
                     <div className="mb-6 sm:mb-8">
                         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Application Form & Notarization</h2>
@@ -1177,10 +1232,10 @@ export default function ApplicationForm() {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
-                                            Uploading...
+                                            {isReupload ? 'Saving...' : 'Uploading...'}
                                         </>
                                     ) : (
-                                        'Complete Application →'
+                                        isReupload ? 'Done - Return to Status' : 'Complete Application →'
                                     )}
                                 </button>
                             </div>

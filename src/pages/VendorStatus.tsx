@@ -22,7 +22,7 @@ interface VendorApplication {
     assigned_stall_id?: string;
     assigned_section_name?: string;
     stall_applications?: StallApplication[];
-    status?: 'won_raffle' | 'documents_submitted' | 'documents_approved' | 'activated';
+    status?: string; // Allow any status string
     person_photo_approved?: boolean;
     person_photo_rejection_reason?: string;
     barangay_clearance_approved?: boolean;
@@ -59,7 +59,7 @@ interface Application {
     actual_occupant_phone?: string;
     assigned_stall_id?: string;
     assigned_section_name?: string;
-    status?: 'won_raffle' | 'documents_submitted' | 'documents_approved' | 'activated';
+    status?: string; // Allow any status string
     username?: string;
     activated_at?: string;
     person_photo_approved?: boolean;
@@ -516,7 +516,6 @@ export default function VendorStatus() {
                     assigned_section_name,
                     status,
                     username,
-                    activated_at,
                     business_name,
                     phone_number,
                     actual_occupant_first_name,
@@ -524,16 +523,22 @@ export default function VendorStatus() {
                     actual_occupant_phone,
                     person_photo_approved,
                     person_photo_rejection_reason,
+                    person_photo_reuploaded,
                     barangay_clearance_approved,
                     barangay_clearance_rejection_reason,
+                    barangay_clearance_reuploaded,
                     id_front_photo_approved,
                     id_front_photo_rejection_reason,
+                    id_front_photo_reuploaded,
                     id_back_photo_approved,
                     id_back_photo_rejection_reason,
+                    id_back_photo_reuploaded,
                     birth_certificate_approved,
                     birth_certificate_rejection_reason,
+                    birth_certificate_reuploaded,
                     marriage_certificate_approved,
                     marriage_certificate_rejection_reason,
+                    marriage_certificate_reuploaded,
                     notarized_document_approved,
                     notarized_document_rejection_reason,
                     business_permit_approved,
@@ -567,10 +572,12 @@ export default function VendorStatus() {
                 });
             }
 
-            // If the vendor has won a raffle, fetch raffle details
+            // If the vendor has won a raffle, fetch raffle details for relevant statuses
+            // Note: partially_approved is for regular applications with rejected docs, not raffle winners
             if (
                 application.status === 'won_raffle' ||
                 application.status === 'documents_submitted' ||
+                application.status === 'documents_approved' ||
                 application.status === 'activated'
             ) {
                 await fetchRaffleData(application.id);
@@ -645,7 +652,8 @@ export default function VendorStatus() {
 
 
     const getApplicationStatusBadge = (status: string) => {
-        switch (status) {
+        const normalizedStatus = status?.toLowerCase();
+        switch (normalizedStatus) {
             case 'approved':
                 return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">✓ Approved</span>
             case 'approved_for_raffle':
@@ -660,6 +668,7 @@ export default function VendorStatus() {
                 return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">🎉 Activated</span>
             case 'partially_approved':
                 return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">⚠ Partially Approved</span>
+            case 'pending':
             case 'pending_approval':
                 return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">⏳ Under Review</span>
             case 'rejected':
@@ -667,7 +676,7 @@ export default function VendorStatus() {
             case 'draft':
                 return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">📝 Draft</span>
             default:
-                return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">Unknown</span>
+                return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">{status || 'Unknown'}</span>
         }
     }
 

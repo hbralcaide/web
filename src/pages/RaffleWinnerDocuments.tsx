@@ -329,6 +329,12 @@ export default function RaffleWinnerDocuments() {
     const businessPermitStatus = getDocumentStatus('business_permit')
     const cedulaStatus = getDocumentStatus('cedula')
     const allDocumentsApproved = businessPermitStatus.status === 'approved' && cedulaStatus.status === 'approved'
+    
+    // Check if any document was rejected (for resubmission flow)
+    const hasRejectedDocuments = businessPermitStatus.status === 'rejected' || cedulaStatus.status === 'rejected'
+    
+    // Check if documents have been uploaded (either initially or re-uploaded)
+    const hasUploadedDocuments = applicationData?.business_permit_document && applicationData?.cedula_document
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -511,15 +517,22 @@ export default function RaffleWinnerDocuments() {
 
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-6 sm:mt-8">
-                        {!allDocumentsApproved && applicationData?.status !== 'documents_submitted' && (
+                        {/* Show submit button if:
+                            1. Documents are not all approved, AND
+                            2. Either: status is not 'documents_submitted' OR documents were rejected and re-uploaded
+                        */}
+                        {!allDocumentsApproved && (
+                            applicationData?.status !== 'documents_submitted' || 
+                            (hasRejectedDocuments && hasUploadedDocuments)
+                        ) ? (
                             <button
                                 onClick={handleSubmitDocuments}
                                 disabled={uploading || !applicationData?.business_permit_document || !applicationData?.cedula_document}
                                 className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors active:scale-95"
                             >
-                                {uploading ? 'Processing...' : 'Submit Documents for Review'}
+                                {uploading ? 'Processing...' : hasRejectedDocuments ? 'Resubmit Documents for Review' : 'Submit Documents for Review'}
                             </button>
-                        )}
+                        ) : null}
 
                         {allDocumentsApproved && (
                             <button

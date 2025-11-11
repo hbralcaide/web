@@ -656,24 +656,39 @@ export default function Vendors() {
                 console.log('Fetched updated app data:', { updatedApp, fetchError });
 
                 if (!fetchError && updatedApp.business_permit_approved && updatedApp.cedula_approved) {
-                    console.log('Both documents approved, updating status to documents_approved');
+                    console.log('Both cedula and business permit approved, updating status to active');
 
-                    // Update vendor application status to 'documents_approved' so vendor can see credentials
+                    // Update vendor application status to 'active' when both documents are approved
                     const { error: statusUpdateError } = await (supabase as any)
                         .from('vendor_applications')
-                        .update({ status: 'documents_approved' })
+                        .update({ status: 'active' })
                         .eq('id', vendorDocuments.application.id);
 
                     if (statusUpdateError) {
-                        console.error('Error updating status to documents_approved:', statusUpdateError);
+                        console.error('Error updating status to active:', statusUpdateError);
                     } else {
-                        console.log('Status successfully updated to documents_approved in vendor_applications');
+                        console.log('Status successfully updated to active in vendor_applications');
+                    }
+
+                    // Also update the vendor_profiles status to 'Active' and application_status to 'approved'
+                    const { error: profileStatusError } = await (supabase as any)
+                        .from('vendor_profiles')
+                        .update({ 
+                            status: 'Active',
+                            application_status: 'approved'
+                        })
+                        .eq('vendor_application_id', vendorDocuments.application.id);
+
+                    if (profileStatusError) {
+                        console.error('Error updating vendor_profiles status to Active:', profileStatusError);
+                    } else {
+                        console.log('Status and application_status successfully updated in vendor_profiles');
                     }
 
                     setApprovalModalData({
                         type: 'success',
                         title: 'Success',
-                        message: `All documents approved! ${vendorDocuments.application.first_name} ${vendorDocuments.application.last_name} can now set up their account credentials.`
+                        message: `All documents approved! ${vendorDocuments.application.first_name} ${vendorDocuments.application.last_name} is now active.`
                     });
                 } else {
                     console.warn('Condition not met for status update to Active:', {
@@ -1360,8 +1375,8 @@ export default function Vendors() {
                 <div className="flex space-x-2">
                     <button
                         onClick={handleApprove}
-                        disabled={isUpdating || approvalStatus.status === 'approved'}
-                        className={`px-3 py-1 text-xs rounded ${isUpdating || approvalStatus.status === 'approved'
+                        disabled={isUpdating || approvalStatus.status === 'approved' || approvalStatus.status === 'rejected'}
+                        className={`px-3 py-1 text-xs rounded ${isUpdating || approvalStatus.status === 'approved' || approvalStatus.status === 'rejected'
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
@@ -1370,8 +1385,8 @@ export default function Vendors() {
                     </button>
                     <button
                         onClick={handleReject}
-                        disabled={isUpdating || approvalStatus.status === 'approved'}
-                        className={`px-3 py-1 text-xs rounded ${isUpdating || approvalStatus.status === 'approved'
+                        disabled={isUpdating || approvalStatus.status === 'approved' || approvalStatus.status === 'rejected'}
+                        className={`px-3 py-1 text-xs rounded ${isUpdating || approvalStatus.status === 'approved' || approvalStatus.status === 'rejected'
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             : 'bg-red-100 text-red-700 hover:bg-red-200'
                             }`}
@@ -1418,6 +1433,12 @@ export default function Vendors() {
                     Documents Approved
                 </span>
             );
+        } else if (normalizedStatus === 'active' || normalizedAppStatus === 'active') {
+            return (
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                    Active
+                </span>
+            );
         } else if (normalizedStatus === 'activated' || normalizedAppStatus === 'activated') {
             return (
                 <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
@@ -1429,10 +1450,6 @@ export default function Vendors() {
                 <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
                     Pending
                 </span>
-            );
-        } else if (normalizedStatus === 'activated' || normalizedAppStatus === 'active') {
-            return (
-                <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800"></span>
             );
         } else if (normalizedStatus === 'inactive' || normalizedAppStatus === 'inactive') {
             return (
